@@ -1,0 +1,34 @@
+---
+/** Assistant d'installation : affiché aux mariés tant que le mariage n'est pas configuré (base neuve). */
+import AdminLayout from '~/layouts/AdminLayout.astro';
+import WeddingForm from '~/features/wedding/islands/WeddingForm';
+import { getWedding } from '~/features/wedding/wedding.service';
+import { admin } from '~/content/fr';
+import { getDb } from '~/lib/db/client';
+
+if (await getWedding(getDb())) return Astro.redirect('/admin?tab=wedding', 303);
+Astro.response.headers.set('cache-control', 'no-store');
+
+const empty = {
+  partner1First: '',
+  partner1Last: '',
+  partner2First: '',
+  partner2Last: '',
+  weddingDate: '',
+  ceremonyTime: '',
+  receptionTime: '',
+  venueName: '',
+  venueCity: '',
+  venueRegion: '',
+  receptionPlace: '',
+  contactEmail: '',
+  contactPhone: '',
+  contactPhoneLabel: '',
+  privacyEmail: '',
+  rsvpDeadline: '',
+};
+---
+
+<AdminLayout title={admin.wedding.setupEyebrow} setup>
+  <WeddingForm client:load mode="setup" initial={empty} />
+</AdminLayout>

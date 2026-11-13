@@ -1,0 +1,70 @@
+---
+/**
+ * Espace des mariés : onglets Invitations, Mariage, Modifier la carte, Programme, Plan de table, Traiteur (?tab=…).
+ * Tant que le mariage n'est pas configuré : assistant d'installation (/admin/setup).
+ */
+import AdminLayout from '~/layouts/AdminLayout.astro';
+import CatererTab from '~/features/admin/components/CatererTab.astro';
+import CardEditor from '~/features/card/islands/CardEditor';
+import { loadEditorData } from '~/features/card/card.admin';
+import PlanEditor from '~/features/seating/islands/PlanEditor';
+import ProgrammeEditor from '~/features/programme/islands/ProgrammeEditor';
+import { loadProgramme } from '~/features/programme/programme.service';
+import { listPlans, planPeople, resolvePlan } from '~/features/seating/seating.service';
+import InvitationsApp from '~/features/admin/islands/InvitationsApp';
+import KpisLive, { Kpis } from '~/features/admin/islands/Kpis';
+import { computeKpis, listInvitations } from '~/features/admin/invitations.service';
+import { getDb } from '~/lib/db/client';
+import { getEnv } from '~/lib/env';
+import WeddingForm from '~/features/wedding/islands/WeddingForm';
+import { getWedding } from '~/features/wedding/wedding.service';
+import { weddingLabels } from '~/features/wedding/wedding';
+import { formatPhone } from '~/lib/phone';
+
+const TABS = ['list', 'wedding', 'card', 'programme', 'plan', 'caterer'] as const;
+type Tab = (typeof TABS)[number];
+const q = Astro.url.searchParams.get('tab');
+const tab: Tab = TABS.includes(q as Tab) ? (q as Tab) : 'list';
+const db = getDb();
+const env = getEnv();
+const wedding = await getWedding(db);
+if (!wedding) return Astro.redirect('/admin/setup', 303);
+const w = weddingLabels(wedding);
+const kpis = await computeKpis(db);
+const list = tab === 'list' ? await listInvitations(db, env.PUBLIC_URL) : [];
+const editor = tab === 'card' ? await loadEditorData(db) : null;
+const programme = tab === 'programme' ? await loadProgramme(db, w) : null;
+const planData =
+  tab === 'plan'
+    ? await (async () => {
+        const plan = await resolvePlan(db, Astro.url.searchParams.get('plan'));
+        return { plan, plans: await listPlans(db), families: await planPeople(db) };
+      })()
+    : null;
+const publicHost = env.PUBLIC_URL.replace(/^https?:\/\//, '');
+Astro.response.headers.set('cache-control', 'no-store');
+---
+
+<AdminLayout tab={tab} wide={tab === 'plan'}>
+  {tab === 'list' ? <KpisLive slot="kpis" client:load kpis={kpis} /> : <Kpis slot="kpis" kpis={kpis} />}
+  {tab === 'list' && (
+    <InvitationsApp client:load initial={list} kpis={kpis} publicHost={publicHost} wedding={w} />
+  )}
+  {tab === 'wedding' && (
+    <WeddingForm
+      client:load
+      mode="edit"
+      initial={{
+        ...wedding,
+        contactPhone: wedding.contactPhone ? formatPhone(wedding.contactPhone) : '',
+        rsvpDeadline: '',
+      }}
+    />
+  )}
+  {editor && <CardEditor client:load initial={editor} />}
+  {programme && <ProgrammeEditor client:load initial={programme} />}
+  {planData && (
+    <PlanEditor client:load initial={planData.plan} plans={planData.plans} families={planData.families} />
+  )}
+  {tab === 'caterer' && <CatererTab />}
+</AdminLayout>
