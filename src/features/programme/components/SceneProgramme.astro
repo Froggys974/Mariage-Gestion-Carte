@@ -1,0 +1,48 @@
+---
+/** Scène 2 · Le programme : les moments de la journée, modifiables dans l'admin (onglet « Programme »). */
+import Flower from '~/components/ui/Flower.astro';
+import { programme as t } from '~/content/fr';
+import type { BootProgrammeItem } from '../../invitation/boot';
+import './programme.css';
+
+interface Props {
+  items: BootProgrammeItem[];
+  /** « Samedi 19 décembre 2026 » */
+  date: string;
+}
+const { items, date } = Astro.props;
+const KINDS = ['hibiscus', 'frangipani', 'bougain', 'vanille'] as const;
+---
+
+<section data-scene="2" class="scene scene--center scene--hidden prog" aria-labelledby="prog-title">
+  <div class="scene__inner prog__inner">
+    <div class="prog__head">
+      <p data-rise class="eyebrow">
+        {t.eyebrow}
+      </p>
+      <h2 data-rise class="prog__title" id="prog-title">
+        {t.title[0]}
+        <br />
+        {t.title[1]}
+      </h2>
+      <p data-rise class="prog__date">
+        {date}
+      </p>
+    </div>
+    <ol class="prog__list" aria-label={t.list}>
+      {items.map((it, i) => (
+        <li data-rise class="prog__item">
+          <span class="prog__time">{it.time}</span>
+          <span class="prog__dot">
+            <Flower kind={KINDS[i % KINDS.length]!} />
+          </span>
+          <div class="prog__body">
+            <p class="prog__what">{it.title}</p>
+            {it.place && <p class="prog__place">{it.place}</p>}
+            {it.note && <p class="prog__note">{it.note}</p>}
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

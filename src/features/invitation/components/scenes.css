@@ -1,0 +1,229 @@
+/* Scènes Dress code et Contact */
+.dress__inner {
+  gap: 22px;
+}
+.dress__inner > p,
+.contact__inner > p {
+  margin: 0;
+}
+.dress__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 9vw, 46px);
+  line-height: 1.14;
+  max-width: 520px;
+}
+.dress__body {
+  font-size: 14px;
+  line-height: 1.85;
+  color: rgba(247, 243, 234, 0.78);
+  max-width: 400px;
+}
+.dress__palette {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dress__swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.dress__flower {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  animation: bob 2.6s ease-in-out infinite;
+}
+.dress__swatch:nth-child(2) .dress__flower {
+  animation-duration: 3.1s;
+}
+.dress__swatch:nth-child(3) .dress__flower {
+  animation-duration: 2.8s;
+}
+.dress__swatch:nth-child(4) .dress__flower {
+  animation-duration: 3.4s;
+}
+.dress__flower > .flower {
+  width: 100%;
+  height: 100%;
+}
+.dress__name {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.65);
+}
+.dress__inner > .dress__closing {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--or-500);
+  margin-top: 4px;
+}
+
+.contact__inner {
+  gap: 18px;
+  width: 100%;
+}
+.contact__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 8vw, 40px);
+  line-height: 1.2;
+  max-width: 460px;
+}
+.contact__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(360px, 100%);
+  margin-top: 6px;
+}
+.contact__card {
+  border: 1px solid rgba(247, 243, 234, 0.18);
+  background: rgba(247, 243, 234, 0.04);
+  border-radius: var(--radius-card);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  color: var(--or-500);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--dur-fast);
+}
+.contact__card--lost {
+  border: 1px dashed rgba(229, 185, 107, 0.5);
+  background: rgba(229, 185, 107, 0.06);
+  color: var(--text-primary);
+}
+@media (hover: hover) {
+  .contact__card:hover {
+    border-color: var(--border-accent);
+  }
+}
+.contact__label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.55);
+}
+.contact__card--lost .contact__label {
+  color: var(--or-500);
+}
+.contact__value {
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: normal;
+}
+.contact__admin {
+  margin-top: 14px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.45);
+}
+.contact__admin a {
+  color: rgba(247, 243, 234, 0.45);
+  display: inline-block;
+  padding: 14px 4px;
+  margin: -14px 0;
+}
+@media (hover: hover) {
+  .contact__admin a:hover {
+    color: var(--or-300);
+  }
+}
+
+/* ---- Écrans courts (≈ 320 × 568) ---- */
+@media (max-height: 620px) and (orientation: portrait), (max-height: 620px) and (min-height: 501px) {
+  .dress__inner {
+    gap: 14px;
+  }
+  .dress__body {
+    line-height: 1.7;
+  }
+  .dress__flower {
+    width: 44px;
+    height: 44px;
+  }
+  .contact__inner {
+    gap: 12px;
+  }
+  .contact__cards {
+    gap: 8px;
+  }
+  .contact__card {
+    padding: 13px 16px;
+  }
+}
+
+/* ---- Téléphone à l'horizontale : titre et texte à gauche, fleurs ou cartes à droite ---- */
+@media (orientation: landscape) and (max-height: 500px) {
+  .scene__inner.dress__inner,
+  .scene__inner.contact__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(24px, 5vw, 56px);
+    row-gap: 10px;
+    max-width: 860px;
+  }
+  .dress__inner > *,
+  .contact__inner > * {
+    grid-column: 1;
+  }
+  .dress__title {
+    font-size: clamp(26px, 8vh, 34px);
+  }
+  .dress__body {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .dress__inner > .dress__palette {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin: 0;
+  }
+  .dress__inner > .dress__closing {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 0;
+  }
+  .scene__inner.contact__inner {
+    grid-template-rows: 1fr auto auto auto 1fr;
+  }
+  .contact__inner > :first-child {
+    grid-row: 2;
+  }
+  .contact__title {
+    grid-row: 3;
+    font-size: clamp(24px, 7vh, 32px);
+  }
+  .contact__inner > .contact__admin {
+    grid-row: 4;
+  }
+  .contact__inner > .contact__cards {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    margin: 0;
+    gap: 8px;
+  }
+  .contact__card {
+    padding: 10px 16px;
+  }
+  .contact__admin {
+    margin-top: 0;
+  }
+}

@@ -1,0 +1,59 @@
+---
+/** Scène 0 · Accueil : couronne de 9 fleurs, noms, date, lieu, bouton « Ouvrir le faire‑part ». */
+import Flower from '~/components/ui/Flower.astro';
+import Rich from '~/components/ui/Rich.astro';
+import { fr } from '~/content/fr';
+import type { WeddingLabels } from '../../wedding/wedding';
+import './home.css';
+
+interface Props {
+  wedding: WeddingLabels;
+}
+const { wedding: w } = Astro.props;
+
+const WREATH = ['hibiscus', 'frangipani', 'bougain'] as const;
+---
+
+<section data-scene="0" class="scene scene--center home" aria-labelledby="home-title">
+  <div class="scene__inner">
+    <div class="wreath" aria-hidden="true">
+      {Array.from({ length: 9 }, (_, i) => (
+        <div data-rise class="wreath__item">
+          <div class="wreath__spin">
+            <Flower kind={WREATH[i % 3]!} />
+          </div>
+        </div>
+      ))}
+    </div>
+    <p data-rise class="home__invited">
+      {fr.home.invited}
+    </p>
+    <p data-rise class="home__eyebrow">
+      <Rich text={fr.home.eyebrow} />
+    </p>
+    <h1 id="home-title" class="sr-only">
+      {w.name1} {fr.home.amp} {w.name2}
+    </h1>
+    <div data-rise class="home__name" aria-hidden="true">
+      {w.name1}
+    </div>
+    <div data-rise class="home__amp" aria-hidden="true">
+      {fr.home.amp}
+    </div>
+    <div data-rise class="home__name home__name--2" aria-hidden="true">
+      {w.name2}
+    </div>
+    <div data-rise class="home__rule" aria-hidden="true"></div>
+    <div data-rise class="home__when">
+      <div class="home__date">{w.dateLong}</div>
+      <div class="home__place">
+        {w.venueName}
+        <br />
+        {w.cityLine}
+      </div>
+    </div>
+    <button data-rise class="btn btn--gold home__open" type="button" data-go="1">
+      {fr.home.open}
+    </button>
+  </div>
+</section>

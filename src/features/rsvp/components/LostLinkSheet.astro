@@ -1,0 +1,45 @@
+---
+/** Feuille « Retrouver mon invitation » (lien perdu). */
+import Sheet from '~/components/ui/Sheet.astro';
+import { lost } from '~/content/fr';
+---
+
+<Sheet id="lost" title={lost.title}>
+  <div data-lost-ask>
+    <form class="lost__form" novalidate>
+      <p class="sheet__text">{lost.intro}</p>
+      <label class="field">
+        {lost.label}
+        <input
+          class="field__input"
+          name="contact"
+          type="text"
+          inputmode="email"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder={lost.placeholder}
+          aria-describedby="lost-error"
+          required
+        />
+      </label>
+      <p class="sheet__error" id="lost-error" data-lost-error role="alert" hidden></p>
+      <button class="sheet__submit" type="submit">
+        {lost.submit}
+      </button>
+    </form>
+  </div>
+  <div data-lost-done hidden role="status">
+    <p class="sheet__done">{lost.done}</p>
+    <p class="sheet__more">{lost.doneMore}</p>
+  </div>
+</Sheet>
+
+<style>
+  .lost__form,
+  [data-lost-done] {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+</style>

@@ -1,0 +1,16 @@
+---
+/** Visionneuse de la carte en image (navigateurs intégrés sans téléchargement). */
+import Sheet from '~/components/ui/Sheet.astro';
+import { card } from '~/content/fr';
+import type { WeddingLabels } from '../../wedding/wedding';
+
+interface Props {
+  wedding: WeddingLabels;
+}
+const { wedding } = Astro.props;
+---
+
+<Sheet id="card-image" title={card.longPressTitle} scroll>
+  <img class="card-viewer__img" data-card-img alt={card.shareTitle(wedding)} width="1080" height="1512" />
+  <p class="sheet__more">{card.longPressHint}</p>
+</Sheet>

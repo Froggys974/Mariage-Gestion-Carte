@@ -1,0 +1,48 @@
+---
+/** Scène 5 · Contact : email, téléphone, itinéraire (infos du mariage), « Lien perdu ? », espace des mariés. */
+import { contact } from '~/content/fr';
+import { formatPhone } from '~/lib/phone';
+import type { WeddingLabels } from '../../wedding/wedding';
+import './scenes.css';
+
+interface Props {
+  wedding: WeddingLabels;
+}
+const { wedding: w } = Astro.props;
+---
+
+<section data-scene="5" class="scene scene--center scene--hidden contact" aria-labelledby="contact-title">
+  <div class="scene__inner contact__inner">
+    <p data-rise class="eyebrow">
+      {contact.eyebrow}
+    </p>
+    <h2 data-rise class="contact__title" id="contact-title">
+      {contact.title}
+    </h2>
+    <div class="contact__cards">
+      <a data-rise class="contact__card" href={`mailto:${w.contactEmail}`}>
+        <span class="contact__label">{contact.email}</span>
+        <span class="contact__value">{w.contactEmail}</span>
+      </a>
+      {w.contactPhone && (
+        <a data-rise class="contact__card" href={`tel:${w.contactPhone}`}>
+          <span class="contact__label">{w.contactPhoneLabel || contact.phone}</span>
+          <span class="contact__value">{formatPhone(w.contactPhone)}</span>
+        </a>
+      )}
+      <a data-rise class="contact__card" href={w.mapsUrl} target="_blank" rel="noopener noreferrer">
+        <span class="contact__label">{contact.route}</span>
+        <span class="contact__value">{w.venueWithCity}</span>
+      </a>
+      <button data-rise class="contact__card contact__card--lost" type="button" data-open-lost>
+        <span class="contact__label">{contact.lost.label}</span>
+        <span class="contact__value">{contact.lost.value}</span>
+      </button>
+    </div>
+    <div data-rise class="contact__admin">
+      <a href="/admin">{contact.admin}</a>
+      <span aria-hidden="true"> · </span>
+      <a href="/confidentialite">{contact.privacy}</a>
+    </div>
+  </div>
+</section>

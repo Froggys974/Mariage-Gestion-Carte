@@ -1,0 +1,69 @@
+---
+/** Affichée aux invités tant que les mariés n'ont pas rempli l'assistant d'installation (aucune info en base). */
+import GuestLayout from '~/layouts/GuestLayout.astro';
+import { meta, soon as t } from '~/content/fr';
+import Flower from '~/components/ui/Flower.astro';
+import '~/features/invitation/components/guest.css';
+
+Astro.response.headers.set('cache-control', 'no-store');
+---
+
+<GuestLayout title={meta.genericTitle}>
+  <main class="soon">
+    <div class="soon__flower" aria-hidden="true">
+      <Flower kind="frangipani" />
+    </div>
+    <h1 class="soon__title">{t.title}</h1>
+    <p class="soon__body">{t.body}</p>
+    <a class="soon__admin" href="/admin">
+      {t.admin}
+    </a>
+  </main>
+</GuestLayout>
+
+<style>
+  .soon {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 96px 22px;
+    text-align: center;
+    background: radial-gradient(120% 90% at 50% 0%, #17362a 0%, #0b1a13 60%, #070f0b 100%);
+  }
+  .soon__flower {
+    position: relative;
+    width: 56px;
+    height: 56px;
+  }
+  .soon__flower > :global(.flower) {
+    width: 100%;
+    height: 100%;
+  }
+  .soon__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(28px, 8vw, 44px);
+    line-height: 1.2;
+    max-width: 480px;
+  }
+  .soon__body {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.85;
+    color: rgba(247, 243, 234, 0.78);
+    max-width: 400px;
+  }
+  .soon__admin {
+    margin-top: 18px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(247, 243, 234, 0.45);
+    padding: 14px 4px;
+  }
+</style>

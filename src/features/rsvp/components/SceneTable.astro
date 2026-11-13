@@ -1,0 +1,136 @@
+---
+/** Scène 3 · La table : la réponse au faire‑part (l'invité et sa famille, 6 places au plus). */
+import Flower from '~/components/ui/Flower.astro';
+import { table as t } from '~/content/fr';
+import type { GuestBoot } from '../../invitation/boot';
+import './table.css';
+
+interface Props {
+  boot: GuestBoot;
+}
+const { boot } = Astro.props;
+const SEATS = [0, 1, 2, 3, 4, 5];
+const filled = boot.seats.filter(Boolean).length;
+---
+
+<section data-scene="3" class="scene scene--hidden table-scene" aria-labelledby="table-title">
+  <div class="scene__inner table-scene__inner">
+    <div class="table-scene__head">
+      <p data-rise class="eyebrow table-scene__eyebrow" data-table-eyebrow>
+        {t.eyebrow(boot.family)}
+      </p>
+      <h2 data-rise class="table-scene__title" id="table-title">
+        {t.title}
+        <br />
+        <span class="table-scene__sub">{t.subtitle}</span>
+      </h2>
+      <p data-rise class="table-scene__count" data-seat-count hidden={!boot.token}>
+        {t.count(filled, boot.maxSeats)}
+      </p>
+    </div>
+
+    <div data-rise class="t-stage">
+      <div data-table class="t-box" aria-hidden="true">
+        <div class="t-world" data-world>
+          <div class="t-halo"></div>
+          <div class="t-shadow"></div>
+          <div class="t-cloth">
+            {Array.from({ length: 22 }, () => (
+              <i />
+            ))}
+          </div>
+          <div class="t-top"></div>
+          <div class="t-top-flowers">
+            {SEATS.map((k) => (
+              <Flower kind={k % 2 ? 'frangipani' : 'hibiscus'} />
+            ))}
+          </div>
+          <div class="t-seats">
+            {SEATS.map((i) => (
+              <div class="t-seat" data-seat3d={i}>
+                <div class="t-anchor" data-anchor={i} />
+                <div class="t-plate" />
+                <div class="t-chair" data-chair={i}>
+                  <div class="t-chair__shadow" />
+                  <i class="t-leg" />
+                  <i class="t-leg" />
+                  <i class="t-leg" />
+                  <i class="t-leg" />
+                  <i class="t-leg" />
+                  <i class="t-leg" />
+                  <i class="t-leg" />
+                  <i class="t-leg" />
+                  <div class="t-chair__seat" />
+                  <div class="t-chair__back" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div class="t-bouquet">
+            <div class="t-bouquet__glow"></div>
+            <div class="t-bouquet__leaf t-bouquet__leaf--l"></div>
+            <div class="t-bouquet__leaf t-bouquet__leaf--r"></div>
+            <div class="t-bouquet__leaf t-bouquet__leaf--c"></div>
+            <Flower kind="frangipani" class="t-bouquet__f t-bouquet__f--1" />
+            <Flower kind="bougain" class="t-bouquet__f t-bouquet__f--2" />
+            <Flower kind="hibiscus" class="t-bouquet__f t-bouquet__f--3" />
+            <Flower kind="frangipani" class="t-bouquet__f t-bouquet__f--4" />
+            <div class="t-bouquet__vase"></div>
+          </div>
+        </div>
+        {SEATS.map((i) => (
+          <div class="t-label" data-seat={i} data-label={i}>
+            <div class="t-label__filled">
+              <span class="t-label__initials" data-initials />
+            </div>
+            <div class="t-label__name" data-name />
+            <div class="t-label__open">+</div>
+            <div class="t-label__locked" />
+          </div>
+        ))}
+      </div>
+
+      <ul class="t-a11y" aria-label={t.a11yList} data-a11y-list>
+        {SEATS.map((i) => (
+          <li>
+            <button type="button" class="t-a11y__btn" data-seat-btn={i}>
+              {t.seatAdd(i + 1)}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="table-scene__actions">
+      {boot.token ? (
+        <>
+          <p class="table-scene__status sr-only" data-rsvp-status role="status" aria-live="polite" />
+          <button data-rise class="btn btn--primary table-scene__send" type="button" data-rsvp-send>
+            {t.send}
+          </button>
+          <p data-rise class="table-scene__hint" data-rsvp-hint>
+            {t.hintBefore}
+          </p>
+          <button data-rise class="btn btn--ghost hit48 table-scene__decline" type="button" data-rsvp-decline>
+            {t.decline}
+          </button>
+        </>
+      ) : (
+        <div data-rise class="table-scene__nolink">
+          <p class="table-scene__nolink-title">{t.noLinkTitle}</p>
+          <p class="table-scene__hint">{t.noLinkBody}</p>
+          <div class="table-scene__nolink-actions">
+            <button class="btn btn--primary" type="button" data-open-lost>
+              {t.noLinkLost}
+            </button>
+            {boot.publicRsvp && (
+              <a class="btn btn--secondary" href="/rsvp">
+                {t.noLinkPublic}
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</section>
