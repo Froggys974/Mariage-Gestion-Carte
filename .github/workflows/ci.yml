@@ -1,10 +1,8 @@
-# Vérifications automatiques à chaque push et pull request :
+# Vérifications automatiques à chaque pull request (push direct sur main bloqué : tout passe par une PR) :
 #   qualité (lint, types, tests unitaires + base réelle) → build → e2e Playwright (7 profils) + Lighthouse.
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
 
 concurrency:
@@ -95,7 +93,7 @@ jobs:
           LOG_LEVEL: warn
         run: |
           nohup node dist/start.mjs > server.log 2>&1 &
-          for i in $(seq 1 60); do curl -fs http://localhost:4321/api/health && exit 0; sleep 1; done
+          for _ in $(seq 1 60); do curl -fs http://localhost:4321/api/health && exit 0; sleep 1; done
           cat server.log; exit 1
       - run: pnpm budget:js /
       # Lighthouse derrière Caddy (compression zstd/gzip comme en production)
