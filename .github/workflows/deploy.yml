@@ -1,0 +1,66 @@
+# Déploiement continu : quand la CI est verte sur main, le code est envoyé au serveur qui reconstruit le site.
+# Réglages (une fois) : doc/CONFIGURATION.md § 8. Les secrets du site restent dans /opt/mariage/.env sur le
+# serveur ; GitHub ne garde que la clé de déploiement (qui ne peut lancer que /usr/local/bin/mariage-deploy).
+name: Déploiement
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # relance à la main : GitHub → Actions → Déploiement → Run workflow
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Mise en ligne
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ vars.PUBLIC_URL }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Clé de déploiement et empreinte du serveur
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Envoi du code et reconstruction sur le serveur
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          git archive --format=tar.gz HEAD | ssh -i ~/.ssh/deploy \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 \
+            "deploy@$DEPLOY_HOST"
+
+      - name: Vérification du site en ligne
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS "$PUBLIC_URL/api/health"; then echo; echo "✓ $PUBLIC_URL répond"; exit 0; fi
+            sleep 10
+          done
+          echo "::error::$PUBLIC_URL/api/health ne répond pas 5 minutes après le déploiement"
+          exit 1
+
+      - name: Effacement de la clé
+        if: always()
+        run: rm -f ~/.ssh/deploy

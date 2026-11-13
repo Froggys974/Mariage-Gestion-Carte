@@ -1,0 +1,13 @@
+node_modules
+.pnpm-store
+dist
+.astro
+pnpm-lock.yaml
+drizzle/meta
+doc/design
+doc/design-system
+.claude
+playwright-report
+test-results
+.lighthouseci
+coverage

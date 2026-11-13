@@ -1,0 +1,113 @@
+# PRODUCTION : `make prod-up` (ou `pnpm prod:up`).
+# Caddy sert https://$DOMAIN (certificat Let's Encrypt automatique) et relaie vers app.
+# Variables : fichier .env (voir .env.example et doc/CONFIGURATION.md).
+name: mariage
+
+x-app: &app
+  build: { context: ., target: runtime }
+  image: mariage-rc-gn:prod
+  env_file: ${APP_ENV_FILE:-.env}
+  restart: unless-stopped
+  volumes:
+    - uploads:/data/uploads
+  networks: [internal]
+
+x-app-env: &app-env
+  NODE_ENV: production
+  DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+  UPLOAD_DIR: /data/uploads
+  HOST: 0.0.0.0
+  PORT: '4321'
+  TRUST_PROXY: 'true'
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: ${TZ:-Indian/Reunion}
+    volumes: [pg18data:/var/lib/postgresql]
+    networks: [internal]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Lancé une seule fois avant app et worker
+  migrate:
+    <<: *app
+    environment: *app-env
+    command: ['node', 'scripts/run.mjs', 'migrate']
+    restart: 'no'
+    depends_on:
+      db: { condition: service_healthy }
+
+  app:
+    <<: *app
+    environment: *app-env
+    expose: ['4321']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    <<: *app
+    environment:
+      <<: *app-env
+      SERVICE_NAME: worker
+    command: ['node', 'scripts/run.mjs', 'worker']
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN manquant dans .env}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL manquant dans .env (email pour Lets Encrypt)}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal]
+    depends_on: [app]
+
+  # Sauvegarde chaque nuit (pg_dump + photos), garde les 14 dernières, vérifie la restauration
+  backup:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    entrypoint: ['/bin/sh', '/scripts/entrypoint.sh']
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      BACKUP_KEEP: ${BACKUP_KEEP:-14}
+      BACKUP_CRON: ${BACKUP_CRON:-0 3 * * *}
+      TZ: ${TZ:-Indian/Reunion}
+    volumes:
+      - ./docker/backup:/scripts:ro
+      - backups:/backups
+      - uploads:/data/uploads
+    networks: [internal]
+    depends_on:
+      db: { condition: service_healthy }
+
+networks:
+  internal:
+
+volumes:
+  pg18data:
+  uploads:
+  backups:
+  caddy_data:
+  caddy_config:

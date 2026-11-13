@@ -1,0 +1,91 @@
+# Environnement de DÉVELOPPEMENT : `docker compose up` (ou `make dev` / `pnpm docker:dev`)
+#   site   http://localhost:4321      emails  http://localhost:8025 (Mailpit)
+#   base   localhost:5434             adminer http://localhost:8080 (profil « tools »)
+name: mariage-dev
+
+x-app: &app
+  build: { context: ., target: dev }
+  image: mariage-rc-gn:dev
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://${POSTGRES_USER:-mariage}:${POSTGRES_PASSWORD:-mariage}@db:5432/${POSTGRES_DB:-mariage}
+    SMTP_HOST: mailpit
+    SMTP_PORT: '1025'
+    UPLOAD_DIR: /data/uploads
+    WATCH_POLL: '1'
+    # cache pnpm DANS le conteneur : jamais dans le dossier du projet monté (sinon .pnpm-store/ y apparaît)
+    npm_config_store_dir: /pnpm/store
+  volumes:
+    - .:/app
+    - node_modules:/app/node_modules
+    - pnpm-store:/pnpm/store
+    - uploads:/data/uploads
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mariage}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mariage}
+      POSTGRES_DB: ${POSTGRES_DB:-mariage}
+      TZ: Indian/Reunion
+    ports: ['5434:5432']
+    volumes:
+      - pg18data:/var/lib/postgresql
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # Avant app et worker, une seule fois : remet node_modules (volume) en phase avec pnpm-lock.yaml
+  # après une mise à jour des dépendances, puis applique les migrations.
+  migrate:
+    <<: *app
+    command: ['sh', '-c', 'pnpm install --frozen-lockfile && node scripts/run.mjs migrate']
+    restart: 'no'
+    depends_on:
+      db: { condition: service_healthy }
+
+  app:
+    <<: *app
+    # --force : remplace un verrou .astro/dev.json laissé par un arrêt brutal (un seul serveur par conteneur)
+    command: ['pnpm', 'dev', '--host', '0.0.0.0', '--force']
+    ports: ['4321:4321']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      mailpit: { condition: service_started }
+
+  # File d'envoi (emails, WhatsApp) et tâches planifiées
+  worker:
+    <<: *app
+    command: ['node', '--watch-path=src', '--import', 'tsx', 'src/worker/index.ts']
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-mariage}:${POSTGRES_PASSWORD:-mariage}@db:5432/${POSTGRES_DB:-mariage}
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      UPLOAD_DIR: /data/uploads
+      SERVICE_NAME: worker
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  mailpit:
+    image: axllent/mailpit:v1.33
+    ports: ['8025:8025', '1025:1025']
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: '1'
+      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+
+  adminer:
+    image: adminer:5
+    profiles: [tools]
+    ports: ['8080:8080']
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+
+volumes:
+  pg18data:
+  node_modules:
+  pnpm-store:
+  uploads:
