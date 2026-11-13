@@ -1,0 +1,20 @@
+---
+/** Fleur à 5 pétales en CSS : motif signature (design-system/components/core/Flower.jsx). */
+export type FlowerKind = 'hibiscus' | 'bougain' | 'frangipani' | 'vanille';
+interface Props {
+  kind: FlowerKind;
+  class?: string;
+  /** cœur jaune au centre */
+  heart?: boolean;
+}
+const { kind, class: cls, heart = true } = Astro.props;
+---
+
+<span class:list={['flower', `flower--${kind}`, cls]} aria-hidden="true">
+  <i></i>
+  <i></i>
+  <i></i>
+  <i></i>
+  <i></i>
+  {heart && <b></b>}
+</span>

@@ -1,0 +1,31 @@
+---
+/** Feuille du bas (dialogue modal). Ouverture / fermeture : features/invitation/client/sheets.ts */
+import { nav } from '~/content/fr';
+interface Props {
+  id: string;
+  title: string;
+  /** contenu long : la feuille défile (max 90 % de la hauteur visible) */
+  scroll?: boolean;
+}
+const { id, title, scroll = false } = Astro.props;
+---
+
+<div class="sheet-scrim" data-sheet={id} data-noflower hidden>
+  <div
+    class:list={['sheet', { 'sheet--scroll': scroll }]}
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby={`${id}-title`}
+    tabindex="-1"
+  >
+    <div class="sheet__head">
+      <h2 class="sheet__title" id={`${id}-title`} data-sheet-title>
+        {title}
+      </h2>
+      <button class="sheet__close hit48" type="button" data-sheet-close aria-label={nav.close}>
+        ×
+      </button>
+    </div>
+    <slot />
+  </div>
+</div>
