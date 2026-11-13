@@ -1,0 +1,76 @@
+---
+/** Onglet « Traiteur » : couverts confirmés, allergies regroupées, export CSV. */
+import { admin } from '~/content/fr';
+import { getDb } from '~/lib/db/client';
+import { catererRows, groupNotes } from '../invitations.service';
+import { getSiteSettings } from '../../card/card.service';
+
+const t = admin.caterer;
+const db = getDb();
+const [rows, settings] = await Promise.all([catererRows(db), getSiteSettings(db)]);
+const groups = groupNotes(rows);
+const withNotes = rows.filter((r) => r.note.trim()).length;
+---
+
+<section class="a-card" aria-labelledby="caterer-title">
+  <h2 class="a-card__title" id="caterer-title">
+    {t.title}
+  </h2>
+  <p class="a-hint">
+    {t.covers(rows.length)} · {t.withNotes(withNotes)}
+  </p>
+  {settings.purgedAt && <p class="a-ok">{t.purged}</p>}
+  <div class="a-field">{t.grouped}</div>
+  {groups.length === 0 ? (
+    <p class="a-hint">{t.none}</p>
+  ) : (
+    <ul class="caterer">
+      {groups.map((g) => (
+        <li class="caterer__item">
+          <span class="caterer__note">{g.note}</span>
+          <span class="caterer__count">× {g.people.length}</span>
+          <span class="caterer__who">{g.people.join(' · ')}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+  <div class="a-toolbar">
+    <a class="a-btn a-btn--primary" href="/api/admin/export/traiteur.csv" download>
+      {t.export}
+    </a>
+  </div>
+</section>
+
+<style>
+  .caterer {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .caterer__item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(229, 185, 107, 0.06);
+    border: 1px solid rgba(229, 185, 107, 0.2);
+  }
+  .caterer__note {
+    color: var(--or-300);
+    font-size: 14px;
+  }
+  .caterer__count {
+    font-family: var(--font-display);
+    font-size: 19px;
+    color: var(--or-500);
+  }
+  .caterer__who {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+</style>

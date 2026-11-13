@@ -1,0 +1,11 @@
+/* Polices auto-hébergées (@fontsource, sous-ensemble latin, font-display: swap). */
+@import '@fontsource/pinyon-script/latin-400.css';
+@import '@fontsource/cormorant-garamond/latin-300.css';
+@import '@fontsource/cormorant-garamond/latin-400.css';
+@import '@fontsource/cormorant-garamond/latin-500.css';
+@import '@fontsource/cormorant-garamond/latin-300-italic.css';
+@import '@fontsource/cormorant-garamond/latin-400-italic.css';
+@import '@fontsource/spline-sans/latin-300.css';
+@import '@fontsource/spline-sans/latin-400.css';
+@import '@fontsource/spline-sans/latin-500.css';
+@import '@fontsource/spline-sans/latin-600.css';

@@ -1,0 +1,315 @@
+/* Plan de table — valeurs du prototype « Tableau de bord » (onglet Plan de table). */
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.plan__versions {
+  padding: 10px 14px;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(247, 243, 234, 0.1);
+  background: rgba(247, 243, 234, 0.02);
+}
+.plan__version-select {
+  flex: 1 1 220px;
+}
+.plan__zoom {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.plan__status {
+  font-size: 11px;
+  color: rgba(247, 243, 234, 0.5);
+}
+.plan__status--dirty {
+  color: var(--or-300);
+}
+.a-btn.plan__save {
+  font-size: 11px;
+  padding: 13px 18px;
+  min-height: 44px;
+}
+.plan__warnings {
+  border: 1px solid rgba(232, 138, 133, 0.45);
+  background: rgba(232, 138, 133, 0.08);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--non-500);
+}
+.plan__warnings ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.plan__layout {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.plan__panel {
+  flex: 1 1 240px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  border-radius: 16px;
+  padding: 16px;
+  transition: border-color 0.2s;
+}
+.plan__panel.is-over {
+  border-color: var(--or-500);
+}
+.plan__panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.plan__count,
+.plan__help {
+  font-size: 11px;
+  color: rgba(247, 243, 234, 0.55);
+}
+.plan__help {
+  line-height: 1.6;
+  color: rgba(247, 243, 234, 0.5);
+}
+.plan__family {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.plan__family-name {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--or-500);
+}
+.plan__people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.plan__person {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(229, 185, 107, 0.12);
+  border: 1px solid rgba(229, 185, 107, 0.35);
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  min-height: 36px;
+}
+.plan__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--non-500);
+  display: inline-block;
+  flex: none;
+}
+.plan__all {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--ok-500);
+}
+.plan__legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(247, 243, 234, 0.5);
+}
+.plan__sel {
+  border-top: 1px solid rgba(247, 243, 234, 0.1);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.plan__chairs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.plan__chairs > span:first-child {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.55);
+  flex: 1;
+}
+.plan__n {
+  font-family: var(--font-display);
+  font-size: 24px;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* Salle */
+.plan__board-wrap {
+  flex: 3 1 520px;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: #0e2017;
+  -webkit-overflow-scrolling: touch;
+}
+.plan__board-size {
+  position: relative;
+}
+.plan__board {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1100px;
+  height: 760px;
+  transform-origin: 0 0;
+  background-image: radial-gradient(rgba(247, 243, 234, 0.09) 1px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+.plan__room-label {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.3);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.plan__dance {
+  position: absolute;
+  left: 400px;
+  top: 40px;
+  width: 300px;
+  height: 70px;
+  border: 1px dashed rgba(229, 185, 107, 0.25);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(229, 185, 107, 0.4);
+  pointer-events: none;
+}
+.plan__table-anchor {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.plan__table {
+  position: absolute;
+  background: radial-gradient(circle at 40% 35%, #23503c, #14301f);
+  border: 1px solid rgba(229, 185, 107, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.plan__table.is-selected {
+  border: 2px solid var(--or-500);
+}
+.plan__table-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.1;
+  padding: 0 6px;
+}
+.plan__table-fill {
+  font-size: 10px;
+  color: rgba(247, 243, 234, 0.55);
+}
+.plan__seat {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  margin: -17px;
+  border-radius: 50%;
+  border: 1px dashed rgba(229, 185, 107, 0.5);
+  background: rgba(255, 246, 230, 0.05);
+  color: var(--text-on-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    transform 0.15s,
+    background-color 0.15s;
+}
+.plan__seat.is-filled {
+  border: 1px solid var(--or-poignee);
+  background: var(--gradient-gold);
+  cursor: grab;
+}
+.plan__seat.is-hot {
+  border: 1px solid var(--or-500);
+  transform: scale(1.22);
+}
+.plan__seat.is-hot:not(.is-filled) {
+  background: rgba(229, 185, 107, 0.35);
+}
+.plan__seat-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--non-500);
+  border: 2px solid #0e2017;
+}
+.plan__seat-name {
+  position: absolute;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 400;
+  color: rgba(247, 243, 234, 0.75);
+  pointer-events: none;
+}
+.plan__ghost {
+  position: fixed;
+  transform: translate(-50%, -130%);
+  z-index: 100;
+  pointer-events: none;
+  padding: 9px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--or-500);
+  color: var(--text-on-gold);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}

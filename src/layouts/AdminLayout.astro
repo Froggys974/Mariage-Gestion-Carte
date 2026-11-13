@@ -1,0 +1,88 @@
+---
+/** Gabarit de l'espace des mariés : en-tête, indicateurs, onglets (sauf page de connexion). */
+import '~/styles/tokens.css';
+import '~/styles/fonts.css';
+import '~/styles/base.css';
+import '~/features/card/components/photo-frame.css';
+import '~/features/admin/components/admin.css';
+import { admin as t, meta } from '~/content/fr';
+
+interface Props {
+  title?: string;
+  /** page de connexion : pas d'en-tête ni d'onglets */
+  bare?: boolean;
+  wide?: boolean;
+  tab?: 'list' | 'wedding' | 'card' | 'programme' | 'plan' | 'caterer';
+  /** assistant d'installation : en-tête sans onglets ni lien vers le site (pas encore configuré) */
+  setup?: boolean;
+}
+const { title, bare = false, wide = false, tab, setup = false } = Astro.props;
+const csrf = Astro.locals.admin?.csrfToken ?? '';
+const tabs = [
+  ['list', t.tabs.list],
+  ['wedding', t.tabs.wedding],
+  ['card', t.tabs.card],
+  ['programme', t.tabs.programme],
+  ['plan', t.tabs.plan],
+  ['caterer', t.tabs.caterer],
+] as const;
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="same-origin" />
+    <meta name="theme-color" content="#0b1a13" />
+    <meta name="color-scheme" content="dark" />
+    {csrf && <meta name="csrf-token" content={csrf} />}
+    <title>{title ? `${title} · ${meta.adminTitle}` : meta.adminTitle}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="a-page">
+      <div class:list={['a-wrap', { 'a-wrap--wide': wide }]}>
+        {!bare && (
+          <>
+            <header class="a-header">
+              <div class="a-header__titles">
+                <div class="a-eyebrow">{t.eyebrow}</div>
+                <h1 class="a-title">{t.title}</h1>
+              </div>
+              <div class="a-header__actions">
+                {!setup && (
+                  <a class="a-link-pill" href="/">
+                    {t.viewSite}
+                  </a>
+                )}
+                <form method="post" action="/api/admin/logout">
+                  <input type="hidden" name="_csrf" value={csrf} />
+                  <button class="a-link-pill a-link-pill--muted" type="submit">
+                    {t.logout}
+                  </button>
+                </form>
+              </div>
+            </header>
+            <slot name="kpis" />
+            {!setup && (
+              <nav class="a-tabs" aria-label={t.eyebrow}>
+                {tabs.map(([key, label]) => (
+                  <a
+                    class="a-tab"
+                    href={key === 'list' ? '/admin' : `/admin?tab=${key}`}
+                    aria-current={tab === key ? 'page' : undefined}
+                  >
+                    {label}
+                  </a>
+                ))}
+              </nav>
+            )}
+          </>
+        )}
+        <slot />
+      </div>
+    </div>
+  </body>
+</html>

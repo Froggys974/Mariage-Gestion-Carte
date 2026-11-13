@@ -1,0 +1,112 @@
+# Vérifications automatiques à chaque push et pull request :
+#   qualité (lint, types, tests unitaires + base réelle) → build → e2e Playwright (7 profils) + Lighthouse.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '26'
+
+jobs:
+  quality:
+    name: Lint, types, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      db:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: mariage
+          POSTGRES_PASSWORD: mariage
+          POSTGRES_DB: mariage_test
+        ports: ['5434:5432']
+        options: >-
+          --health-cmd "pg_isready -U mariage -d mariage_test"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:db
+
+  e2e:
+    name: Build, e2e, Lighthouse
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      db:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: mariage
+          POSTGRES_PASSWORD: mariage
+          POSTGRES_DB: mariage_test
+        ports: ['5434:5432']
+        options: >-
+          --health-cmd "pg_isready -U mariage -d mariage_test"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+      mailpit:
+        image: axllent/mailpit:v1.33
+        ports: ['8025:8025', '1025:1025']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium webkit
+      - run: pnpm build
+      - run: pnpm e2e
+      # Serveur de production sur la base e2e (déjà migrée) pour le budget JS et Lighthouse
+      - name: Démarrer le serveur de production
+        env:
+          NODE_ENV: production
+          PORT: '4321'
+          PUBLIC_URL: http://localhost:4321
+          DATABASE_URL: postgres://mariage:mariage@localhost:5434/mariage_test
+          SESSION_SECRET: ci-secret-ci-secret-ci-secret-ci-secret-0123
+          ADMIN_EMAIL: maries@mariage.test
+          ADMIN_PASSWORD_HASH: $argon2id$v=19$m=19456,t=2,p=1$5O72idxnErqv9hXyXNqXRA$hV7/GwoNHXVRtMwWYAn2VY7cH5L97qlhU8xpdBNB6oE
+          EMAIL_PROVIDER: fake
+          SMTP_HOST: localhost
+          SMTP_PORT: '1025'
+          MAIL_FROM: Mariage <mariage@mariage.test>
+          WHATSAPP_PROVIDER: fake
+          WHATSAPP_APP_SECRET: ci-app-secret
+          WHATSAPP_VERIFY_TOKEN: ci-verify
+          LOG_LEVEL: warn
+        run: |
+          nohup node dist/start.mjs > server.log 2>&1 &
+          for i in $(seq 1 60); do curl -fs http://localhost:4321/api/health && exit 0; sleep 1; done
+          cat server.log; exit 1
+      - run: pnpm budget:js /
+      # Lighthouse derrière Caddy (compression zstd/gzip comme en production)
+      - run: pnpm lighthouse:proxy
+      - run: pnpm lighthouse
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: rapports-e2e
+          path: |
+            playwright-report/
+            test-results/
+            .lighthouseci/
+          retention-days: 7

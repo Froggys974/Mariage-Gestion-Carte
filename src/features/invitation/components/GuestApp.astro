@@ -1,0 +1,153 @@
+---
+/** Site invité : une « scène » plein écran par section, éléments fixes, intro, menu et feuilles. */
+import Rich from '~/components/ui/Rich.astro';
+import { fr } from '~/content/fr';
+import type { GuestBoot } from '../boot';
+import SceneHome from './SceneHome.astro';
+import SceneDress from './SceneDress.astro';
+import SceneCard from '../../card/components/SceneCard.astro';
+import CardViewerSheet from '../../card/components/CardViewerSheet.astro';
+import CardEmailSheet from '../../card/components/CardEmailSheet.astro';
+import SceneContact from './SceneContact.astro';
+import SceneProgramme from '../../programme/components/SceneProgramme.astro';
+import LostLinkSheet from '../../rsvp/components/LostLinkSheet.astro';
+import SceneTable from '../../rsvp/components/SceneTable.astro';
+import SeatSheet from '../../rsvp/components/SeatSheet.astro';
+import DeclineSheet from '../../rsvp/components/DeclineSheet.astro';
+import '~/components/ui/sheet.css';
+import './guest.css';
+
+interface Props {
+  boot: GuestBoot;
+}
+const { boot } = Astro.props;
+const bootJson = JSON.stringify(boot).replace(/</g, '\u003c');
+---
+
+<script is:inline>
+  // Avant le premier rendu : intro complète (1re visite), courte (déjà vue), réduite ou absente (?intro=0).
+  (function () {
+    const d = document.documentElement;
+    try {
+      const q = new URLSearchParams(location.search);
+      const rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const seen = localStorage.getItem('rcgn:intro') === '1';
+      d.dataset.intro = q.get('intro') === '0' ? 'none' : rm ? 'reduced' : seen ? 'short' : 'full';
+      // L'accueil reste caché sous l'intro jusqu'à son apparition en fondu (rise) ; filet de sécurité si le script ne se charge pas.
+      if (d.dataset.intro !== 'none' && !rm) {
+        d.dataset.introHold = '';
+        setTimeout(() => d.removeAttribute('data-intro-hold'), 6000);
+      }
+    } catch {
+      d.dataset.intro = 'full';
+    }
+  })();
+</script>
+<a class="skip-link" href="#scene-content">
+  {fr.nav.skipToContent}
+</a>
+<div class="g-root" data-root>
+  <div class="g-tint" aria-hidden="true"></div>
+  <div class="g-glow" data-glow aria-hidden="true"></div>
+  <div class="g-floaters" data-floaters aria-hidden="true"></div>
+
+  <main class="g-stage" data-stage id="scene-content" tabindex="-1">
+    <SceneHome wedding={boot.wedding} />
+    <SceneCard card={boot.card} wedding={boot.wedding} personal={Boolean(boot.token)} />
+    <SceneProgramme items={boot.programme} date={boot.wedding.dateLong} />
+    <SceneTable boot={boot} />
+    <SceneDress />
+    <SceneContact wedding={boot.wedding} />
+  </main>
+
+  <header class="g-header">
+    <div class="g-mono" role="img" aria-label={fr.monogram.label(boot.wedding)}>
+      {boot.wedding.monogram.left} <span>{fr.monogram.amp}</span>
+      {boot.wedding.monogram.right}
+    </div>
+    <button
+      class="g-burger hit48"
+      type="button"
+      data-menu-open
+      aria-label={fr.nav.menu}
+      aria-expanded="false"
+      aria-controls="menu"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </header>
+
+  <nav class="g-dots" aria-label={fr.nav.dots}>
+    {fr.scenes.map((name, i) => (
+      <button class="g-dot" type="button" data-go={i} aria-label={fr.nav.goTo(name)}>
+        <span />
+      </button>
+    ))}
+  </nav>
+
+  <div class="g-bottom">
+    <div class="g-progress" data-progress>
+      01 · {fr.scenes[0]}
+    </div>
+    <div class="g-swipe" data-swipe aria-hidden="true">
+      <span class="g-chevron"></span>
+      <span>{fr.nav.swipe}</span>
+    </div>
+  </div>
+
+  <div class="g-fx" data-fx aria-hidden="true"></div>
+  <div class="g-motes" data-motes aria-hidden="true"></div>
+
+  <div class="g-menu" id="menu" data-menu hidden role="dialog" aria-modal="true" aria-label={fr.nav.menu}>
+    <button class="g-menu__close hit48" type="button" data-menu-close aria-label={fr.nav.close}>
+      ×
+    </button>
+    <nav>
+      {fr.scenes.map((name, i) => (
+        <button class="g-menu__item" type="button" data-go={i}>
+          <span class="num">0{i + 1}</span>
+          <span class="name">{name}</span>
+        </button>
+      ))}
+    </nav>
+    <div class="g-menu__footer">{fr.nav.menuFooter(boot.wedding)}</div>
+  </div>
+
+  <SeatSheet purgeLabel={boot.purgeLabel} />
+  <DeclineSheet deadlineLabel={boot.deadlineLabel} />
+  <LostLinkSheet />
+  <CardViewerSheet wedding={boot.wedding} />
+  {boot.token && <CardEmailSheet email={boot.email} />}
+
+  <div class="intro" data-intro-el data-noflower>
+    <div class="intro__bloom"></div>
+    <div class="intro__text">
+      <div class="intro__welcome">
+        <Rich text={fr.intro.welcome} />
+      </div>
+      <div class="intro__date">{boot.wedding.dateDots}</div>
+    </div>
+    <div class="intro__door intro__door--l">
+      <div class="intro__arch"></div>
+      <div class="intro__handle"></div>
+    </div>
+    <div class="intro__door intro__door--r">
+      <div class="intro__arch"></div>
+      <div class="intro__handle"></div>
+    </div>
+    <i class="intro__petal"></i>
+    <i class="intro__petal"></i>
+    <i class="intro__petal"></i>
+    <i class="intro__petal"></i>
+    <button class="intro__enter hit48" type="button" data-intro-skip>
+      {fr.intro.enter}
+    </button>
+  </div>
+</div>
+
+<script type="application/json" id="guest-boot" set:html={bootJson} />
+<script>
+  import '../client/guest-app';
+</script>

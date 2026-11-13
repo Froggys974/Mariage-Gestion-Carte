@@ -1,0 +1,53 @@
+/*
+ * Photo de la carte dans sa forme (rectangle, rond, arche, ovale), avec point de cadrage et zoom.
+ * Les variables --ph-l, --ph-t, --ph-w, --ph-h (position et taille de l'image en % du cadre) sont posées par
+ * script (CSSOM) : voir frameStyle dans src/features/card/photo-frame.ts, même calcul que l'image PNG.
+ */
+/* toujours les proportions de sa forme, même quand la carte tasse la zone photo : même cadrage partout */
+.photo-shape {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 13 / 5;
+  max-width: 100%;
+  border: 1px solid rgba(28, 51, 38, 0.25);
+  border-radius: 3px;
+  flex: none;
+}
+.photo-shape--round {
+  width: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.photo-shape--oval {
+  width: auto;
+  aspect-ratio: 0.78;
+  border-radius: 50%;
+}
+/* arche : demi-cercle en haut (rayon = la moitié de la largeur = 40 % de la hauteur), bas droit */
+.photo-shape--arch {
+  width: auto;
+  aspect-ratio: 0.8;
+  border-radius: 50% 50% 3px 3px / 40% 40% 3px 3px;
+}
+/* dézoomée : la photo est posée sur la carte, sans filet autour du vide */
+.photo-shape--loose {
+  border-color: transparent;
+}
+.photo-shape picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+/* sans les variables (avant le script) : simple « cover » centré */
+.photo-shape img {
+  position: absolute;
+  display: block;
+  left: var(--ph-l, 0);
+  top: var(--ph-t, 0);
+  width: var(--ph-w, 100%);
+  height: var(--ph-h, 100%);
+  max-width: none;
+  object-fit: cover;
+}

@@ -1,0 +1,140 @@
+/* Copié depuis doc/design-system/tokens (colors, typography, spacing, motion).
+   Les polices sont auto-hébergées (voir fonts.css) : pas d’import Google Fonts. */
+
+/* --- tokens/colors.css --- */
+:root {
+  /* Nuit de feuillage — fonds */
+  --vert-nuit: #070f0b;
+  --vert-900: #0b1a13;
+  --vert-800: #12271c;
+  --vert-700: #17362a;
+  --vert-600: #23503c;
+  /* Or vanille — accent */
+  --or-300: #f2d7a3;
+  --or-500: #e5b96b;
+  --or-700: #c99a4c;
+  --or-900: #a8894a;
+  /* Papier écru — faire-part */
+  --ecru-50: #fbf7ee;
+  --ecru-100: #f2ead7;
+  --ecru-200: #efe4cc;
+  --encre-900: #1c3326;
+  --encre-700: #2c4634;
+  --encre-500: #40543f;
+  --sepia-500: #7a6a45;
+  /* Fleurs de l'île */
+  --hibiscus-700: #8e1630;
+  --hibiscus-500: #e9544f;
+  --bougain-700: #8a1f5c;
+  --bougain-500: #d8468f;
+  --frangi-500: #f4b73f;
+  --frangi-50: #fff6e6;
+  --coeur-fleur: #f6c25a;
+  --lagon-800: #15564f;
+  --lagon-600: #2b8a7e;
+  --feuille-500: #4a9a63;
+  /* Statuts */
+  --ok-500: #8fd6a8;
+  --non-500: #e88a85;
+
+  /* Alias sémantiques */
+  --surface-page: var(--vert-900);
+  --surface-sheet: var(--vert-800);
+  --surface-raised: rgba(247, 243, 234, 0.04);
+  --surface-input: rgba(247, 243, 234, 0.06);
+  --surface-paper: var(--ecru-50);
+  --text-primary: #f7f3ea;
+  --text-secondary: rgba(247, 243, 234, 0.75);
+  --text-muted: rgba(247, 243, 234, 0.55);
+  --text-accent: var(--or-500);
+  --text-on-accent: #14261c;
+  --text-on-paper: var(--encre-900);
+  --border-subtle: rgba(247, 243, 234, 0.14);
+  --border-input: rgba(247, 243, 234, 0.2);
+  --border-accent: rgba(229, 185, 107, 0.55);
+  --action-primary: var(--or-500);
+  --action-primary-hover: var(--or-300);
+  --gradient-page: radial-gradient(
+    120% 90% at 50% 0%,
+    var(--vert-700) 0%,
+    var(--vert-900) 60%,
+    var(--vert-nuit) 100%
+  );
+  --gradient-paper: linear-gradient(170deg, var(--ecru-50), var(--ecru-100));
+  --gradient-gold: linear-gradient(160deg, #f6d78f, var(--or-700));
+}
+
+/* --- tokens/typography.css --- */
+:root {
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Spline Sans', system-ui, sans-serif;
+  --font-mono: ui-monospace, Menlo, monospace;
+
+  --type-hero: 300 clamp(44px, 13vw, 88px)/1.02 var(--font-display);
+  --type-title: 400 clamp(28px, 9vw, 46px)/1.14 var(--font-display);
+  --type-heading: 400 clamp(22px, 7vw, 32px)/1.25 var(--font-display);
+  --type-script: italic 400 19px/1.4 var(--font-display);
+  --type-body: 400 14px/1.85 var(--font-body);
+  --type-small: 400 12px/1.7 var(--font-body);
+  --type-button: 600 12px/1 var(--font-body);
+  --type-eyebrow: 500 11px/1 var(--font-body);
+
+  --tracking-eyebrow: 0.34em;
+  --tracking-button: 0.16em;
+  --tracking-caps: 0.2em;
+}
+
+/* --- tokens/spacing.css --- */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 22px;
+  --space-6: 28px;
+  --space-7: 40px;
+  --space-8: 64px;
+  --section-pad-top: 96px;
+  --section-pad-bottom: 96px;
+  --section-pad-x: 22px;
+
+  --radius-paper: 6px;
+  --radius-field: 10px;
+  --radius-card: 14px;
+  --radius-sheet: 22px;
+  --radius-pill: 999px;
+
+  --tap-min: 48px;
+
+  --shadow-paper: 0 30px 70px rgba(0, 0, 0, 0.5);
+  --shadow-seat: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(229, 185, 107, 0.2);
+  --shadow-glow: 0 0 14px rgba(229, 185, 107, 0.6);
+  --blur-glass: blur(6px);
+}
+
+/* --- tokens/motion.css --- */
+:root {
+  --ease-travel: cubic-bezier(0.65, 0, 0.25, 1);
+  --ease-rise: cubic-bezier(0.2, 0.75, 0.2, 1);
+  --ease-door: cubic-bezier(0.62, 0.02, 0.28, 1);
+  --ease-spring: cubic-bezier(0.34, 1.5, 0.5, 1);
+  --dur-fast: 250ms;
+  --dur-rise: 850ms;
+  --dur-sheet: 350ms;
+  --dur-seat: 750ms;
+  --dur-intro: 4400ms;
+  --stagger: 75ms;
+}
+
+/* --- Extensions de production (absentes du design system, mêmes valeurs que les prototypes) --- */
+:root {
+  --font-script: 'Pinyon Script', 'Cormorant Garamond', cursive;
+  --ecru-card-end: #f1e7d1;
+  --filet: #c9b483;
+  --or-poignee: #d6a94f;
+  --text-on-gold: #14261c;
+  --overlay-scrim: rgba(7, 15, 11, 0.72);
+  --overlay-menu: rgba(7, 15, 11, 0.96);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-glow: 1600ms;
+}

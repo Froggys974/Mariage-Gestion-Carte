@@ -1,0 +1,11 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  '@node-rs/argon2': true
+minimumReleaseAgeExclude:
+  - prettier-plugin-astro@1.1.2
+# rolldown 1.3 accepte @emnapi 2.0.0-beta ; pnpm le partageait avec @astrojs/astro2tsx (@emnapi/core 1.x)
+# et `astro check` plantait (« this.bridge.setLastError is not a function »). On garde la branche 1.x stable.
+overrides:
+  '@emnapi/core': 1.11.3
+  '@emnapi/runtime': 1.11.3

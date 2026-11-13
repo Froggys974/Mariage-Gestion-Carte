@@ -1,0 +1,23 @@
+---
+/** Lien personnel d'un foyer : /i/<token> */
+import GuestLayout from '~/layouts/GuestLayout.astro';
+import GuestApp from '~/features/invitation/components/GuestApp.astro';
+import { meta } from '~/content/fr';
+import { buildGuestBoot, findInvitationByToken } from '~/features/invitation/invitation.service';
+import { getDb } from '~/lib/db/client';
+
+const db = getDb();
+const inv = await findInvitationByToken(db, Astro.params.token ?? '');
+if (!inv) return Astro.rewrite('/404');
+const boot = await buildGuestBoot(db, inv);
+if (!boot) return Astro.rewrite('/bientot');
+Astro.response.headers.set('cache-control', 'private, no-store');
+---
+
+<GuestLayout
+  title={meta.title(boot.wedding)}
+  description={meta.description(boot.wedding)}
+  bodyClass="is-fixed"
+>
+  <GuestApp boot={boot} />
+</GuestLayout>

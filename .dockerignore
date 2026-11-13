@@ -1,0 +1,16 @@
+node_modules
+.pnpm-store
+dist
+.astro
+.git
+.env
+.env.*
+!.env.example
+data
+backups
+playwright-report
+test-results
+.lighthouseci
+coverage
+doc
+.claude

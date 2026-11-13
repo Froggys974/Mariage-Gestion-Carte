@@ -1,0 +1,41 @@
+---
+/** Gabarit HTML du site invité : polices auto-hébergées, préchargement de la police des titres, noindex. */
+import '~/styles/tokens.css';
+import '~/styles/fonts.css';
+import '~/styles/base.css';
+import '~/styles/keyframes.css';
+import '~/components/ui/flower.css';
+import cormorant300 from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-300-normal.woff2?url';
+import cormorantItalic400 from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-italic.woff2?url';
+import { fr } from '~/content/fr';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** classe du <body> (page plein écran sans défilement : « is-fixed ») */
+  bodyClass?: string;
+}
+const { title = fr.meta.genericTitle, description = '', bodyClass } = Astro.props;
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="same-origin" />
+    <meta name="theme-color" content="#0b1a13" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href={cormorant300} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={cormorantItalic400} as="font" type="font/woff2" crossorigin />
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <slot />
+  </body>
+</html>

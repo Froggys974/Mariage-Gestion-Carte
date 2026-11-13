@@ -1,0 +1,51 @@
+---
+/** Feuille « Recevoir la carte par email » (lien personnel uniquement ; adresse préremplie). */
+import Sheet from '~/components/ui/Sheet.astro';
+import { card as t } from '~/content/fr';
+
+interface Props {
+  /** email de l'invitation, proposé par défaut */
+  email: string | null;
+}
+const { email } = Astro.props;
+---
+
+<Sheet id="card-email" title={t.emailTitle}>
+  <div data-card-email-ask>
+    <form class="card-email__form" novalidate>
+      <p class="sheet__text">{t.emailIntro}</p>
+      <label class="field">
+        {t.emailLabel}
+        <input
+          class="field__input"
+          name="email"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          maxlength="200"
+          value={email ?? ''}
+          aria-describedby="card-email-error"
+          required
+        />
+      </label>
+      <p class="sheet__error" id="card-email-error" data-card-email-error role="alert" hidden></p>
+      <button class="sheet__submit" type="submit" data-card-email-submit>
+        {t.emailSubmit}
+      </button>
+    </form>
+  </div>
+  <div data-card-email-done hidden role="status">
+    <p class="sheet__done" data-card-email-done-text></p>
+  </div>
+</Sheet>
+
+<style>
+  .card-email__form,
+  [data-card-email-done] {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+</style>

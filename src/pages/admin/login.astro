@@ -1,0 +1,133 @@
+---
+/** Connexion à l'espace des mariés : email + mot de passe (.env), 5 essais / 15 min / IP. */
+import AdminLayout from '~/layouts/AdminLayout.astro';
+import { admin as t } from '~/content/fr';
+import {
+  authenticate,
+  createSession,
+  randomToken,
+  readSession,
+  safeEqual,
+  SESSION,
+} from '~/lib/auth/session';
+import { getDb } from '~/lib/db/client';
+import { getEnv, isHttps } from '~/lib/env';
+import { clientIp } from '~/lib/http';
+import { logger } from '~/lib/logger';
+import { createDbLimiter, hashKey, LIMITS } from '~/lib/rate-limit';
+
+const db = getDb();
+const env = getEnv();
+const next = (() => {
+  const n = Astro.url.searchParams.get('next') ?? '/admin';
+  return n.startsWith('/admin') && !n.startsWith('//') ? n : '/admin';
+})();
+
+if (await readSession(db, Astro.cookies.get(SESSION.COOKIE)?.value)) return Astro.redirect(next, 303);
+
+let error = '';
+let email = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  email = String(form.get('email') ?? '').slice(0, 200);
+  const password = String(form.get('password') ?? '').slice(0, 200);
+  const csrf = String(form.get('_csrf') ?? '');
+  const cookieCsrf = Astro.cookies.get(SESSION.LOGIN_CSRF_COOKIE)?.value ?? '';
+  const ip = clientIp(Astro.request, Astro.clientAddress, env.TRUST_PROXY);
+  if (!csrf || !cookieCsrf || !safeEqual(csrf, cookieCsrf)) {
+    error = t.login.expired;
+  } else {
+    const decision = await createDbLimiter(db).hit(hashKey('login', ip), LIMITS.ADMIN_LOGIN);
+    if (!decision.allowed) {
+      error = t.login.tooMany;
+      Astro.response.status = 429;
+      logger.warn('connexion admin : limite atteinte');
+    } else {
+      const who = await authenticate(email, password);
+      if (who) {
+        const old = Astro.cookies.get(SESSION.COOKIE)?.value;
+        if (old) await import('~/lib/auth/session').then((m) => m.destroySession(db, old));
+        const { token, expires } = await createSession(db, who);
+        Astro.cookies.set(SESSION.COOKIE, token, {
+          httpOnly: true,
+          secure: isHttps(),
+          sameSite: 'lax',
+          path: '/',
+          expires,
+        });
+        Astro.cookies.delete(SESSION.LOGIN_CSRF_COOKIE, { path: '/admin' });
+        logger.info('connexion admin réussie');
+        return Astro.redirect(next, 303);
+      }
+      error = t.login.error;
+      Astro.response.status = 401;
+    }
+  }
+}
+
+const loginCsrf = randomToken(24);
+Astro.cookies.set(SESSION.LOGIN_CSRF_COOKIE, loginCsrf, {
+  httpOnly: true,
+  secure: isHttps(),
+  sameSite: 'strict',
+  path: '/admin',
+  maxAge: 60 * 60,
+});
+Astro.response.headers.set('cache-control', 'no-store');
+---
+
+<AdminLayout title={t.login.title} bare>
+  <div class="login">
+    <header class="a-header">
+      <div class="a-header__titles">
+        <div class="a-eyebrow">{t.eyebrow}</div>
+        <h1 class="a-title">{t.login.title}</h1>
+      </div>
+    </header>
+    <form class="a-card login__form" method="post" novalidate>
+      <input type="hidden" name="_csrf" value={loginCsrf} />
+      <label class="a-field">
+        {t.login.email}
+        <input class="a-input" type="email" name="email" autocomplete="username" required value={email} />
+      </label>
+      <label class="a-field">
+        {t.login.password}
+        <input class="a-input" type="password" name="password" autocomplete="current-password" required />
+      </label>
+      {error && (
+        <p class="a-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button class="a-btn a-btn--primary" type="submit">
+        {t.login.submit}
+      </button>
+    </form>
+    <a class="login__back" href="/">
+      {t.login.back}
+    </a>
+  </div>
+</AdminLayout>
+
+<style>
+  .login {
+    max-width: 420px;
+    margin: 8vh auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .login__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .login__back {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(247, 243, 234, 0.45);
+    text-align: center;
+    padding: 14px;
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+/** Scène 4 · Dress code : 4 fleurs-couleurs qui se balancent. */
+import Flower from '~/components/ui/Flower.astro';
+import Rich from '~/components/ui/Rich.astro';
+import { dress } from '~/content/fr';
+import './scenes.css';
+
+const KINDS = ['hibiscus', 'bougain', 'vanille', 'frangipani'] as const;
+---
+
+<section data-scene="4" class="scene scene--center scene--hidden dress" aria-labelledby="dress-title">
+  <div class="scene__inner dress__inner">
+    <p data-rise class="eyebrow dress__eyebrow">
+      {dress.eyebrow}
+    </p>
+    <h2 data-rise class="dress__title" id="dress-title">
+      {dress.title[0]}
+      <br />
+      {dress.title[1]}
+    </h2>
+    <p data-rise class="dress__body">
+      {dress.body}
+    </p>
+    <ul class="dress__palette">
+      {dress.palette.map((name, i) => (
+        <li data-rise class="dress__swatch">
+          <div class="dress__flower">
+            <Flower kind={KINDS[i]!} />
+          </div>
+          <span class="dress__name">{name}</span>
+        </li>
+      ))}
+    </ul>
+    <p data-rise class="dress__closing">
+      <Rich text={dress.closing} />
+    </p>
+  </div>
+</section>

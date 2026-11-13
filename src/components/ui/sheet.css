@@ -1,0 +1,182 @@
+/* Feuille du bas — prototype : fond #12271c, filet or, rayon 22px. */
+.sheet-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  background: var(--overlay-scrim);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: riseIn 0.25s both;
+}
+.sheet {
+  width: min(440px, 100%);
+  background: var(--vert-800);
+  border-top: 1px solid rgba(229, 185, 107, 0.4);
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  padding: 22px max(20px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px))
+    max(20px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  outline: none;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sheet--scroll {
+  max-height: 90vh;
+  max-height: 90dvh;
+}
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sheet__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 25px;
+  line-height: 1.2;
+}
+.sheet__close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(247, 243, 234, 0.22);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+}
+.sheet__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(247, 243, 234, 0.75);
+}
+.sheet__done {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+.sheet__more {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: rgba(247, 243, 234, 0.6);
+}
+.sheet__error {
+  margin: -4px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--non-500);
+}
+.sheet__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+.sheet__submit {
+  flex: 1;
+  border: none;
+  background: var(--or-500);
+  color: var(--text-on-gold);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 16px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  min-height: 50px;
+}
+.sheet__danger {
+  border: 1px solid rgba(232, 138, 133, 0.6);
+  background: transparent;
+  color: var(--non-500);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 16px 18px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  min-height: 50px;
+}
+.sheet__cancel {
+  border: 1px solid rgba(247, 243, 234, 0.35);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 16px 18px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  min-height: 50px;
+}
+@media (hover: hover) {
+  .sheet__submit:hover {
+    background: var(--or-300);
+  }
+  .sheet__close:hover,
+  .sheet__cancel:hover {
+    border-color: var(--or-500);
+  }
+}
+
+/* Champs : étiquette en capitales, texte 16px (pas de zoom iOS). */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.6);
+}
+.field__input {
+  background: var(--surface-input);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-field);
+  padding: 14px;
+  color: var(--text-primary);
+  font-size: 16px;
+  min-height: 48px;
+  letter-spacing: normal;
+  text-transform: none;
+  width: 100%;
+}
+.field__input::placeholder {
+  color: rgba(247, 243, 234, 0.4);
+}
+textarea.field__input {
+  resize: vertical;
+  min-height: 0;
+}
+.field__input:focus {
+  border-color: var(--border-accent);
+  outline: none;
+}
+.field__input:focus-visible {
+  outline: 2px solid var(--or-300);
+  outline-offset: 1px;
+}
+.field__help {
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: normal;
+  text-transform: none;
+  color: rgba(247, 243, 234, 0.5);
+}
+.field__help a {
+  color: var(--or-300);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

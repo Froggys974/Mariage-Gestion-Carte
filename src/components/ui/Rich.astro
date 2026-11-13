@@ -1,0 +1,11 @@
+---
+/** Affiche un texte riche de fr.ts : les passages créoles sont balisés lang="rcf". */
+import type { Rich } from '~/content/fr';
+interface Props {
+  text: Rich | string;
+}
+const { text } = Astro.props;
+const segs = typeof text === 'string' ? [text] : text;
+---
+
+{segs.map((s) => (typeof s === 'string' ? s : <span lang="rcf">{s.rcf}</span>))}

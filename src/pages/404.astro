@@ -1,0 +1,62 @@
+---
+/** Lien introuvable (token invalide ou page inconnue). */
+import GuestLayout from '~/layouts/GuestLayout.astro';
+import { meta, notFound as t } from '~/content/fr';
+import '~/features/invitation/components/guest.css';
+Astro.response.status = 404;
+---
+
+<GuestLayout title={meta.notFoundTitle}>
+  <main class="nf">
+    <p class="eyebrow">{t.eyebrow}</p>
+    <h1 class="nf__title">{t.title}</h1>
+    <p class="nf__body">{t.body}</p>
+    <div class="nf__actions">
+      <a class="btn btn--primary" href="/?intro=0&scene=5&lost=1">
+        {t.lost}
+      </a>
+      <a class="btn btn--secondary" href="/">
+        {t.home}
+      </a>
+    </div>
+  </main>
+</GuestLayout>
+
+<style>
+  .nf {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 96px 22px;
+    text-align: center;
+    background: radial-gradient(120% 90% at 50% 0%, #17362a 0%, #0b1a13 60%, #070f0b 100%);
+  }
+  .nf p,
+  .nf h1 {
+    margin: 0;
+  }
+  .nf__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(26px, 8vw, 40px);
+    line-height: 1.2;
+    max-width: 460px;
+  }
+  .nf__body {
+    font-size: 14px;
+    line-height: 1.85;
+    color: rgba(247, 243, 234, 0.78);
+    max-width: 400px;
+  }
+  .nf__actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+  }
+</style>
