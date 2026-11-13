@@ -12,6 +12,7 @@ import { queueSend } from '~/features/messaging/send.service';
 import { getDb } from '~/lib/db/client';
 import { getEnv } from '~/lib/env';
 import { problem } from '~/lib/http';
+import { whatsappApiEnabled } from '~/lib/messaging/providers';
 
 export const GET: APIRoute = () =>
   adminRoute('list', async () => {
@@ -23,7 +24,10 @@ export const GET: APIRoute = () =>
     return { invitations, kpis };
   });
 
-/** « Nouvel envoi » : crée l'invitation et l'envoie (email si présent, sinon WhatsApp). */
+/**
+ * « Nouvel envoi » : crée l'invitation et l'envoie : email si présent ; sinon WhatsApp automatique si l'API Meta
+ * est configurée ; sinon « wa_me » : le navigateur ouvre WhatsApp avec le message prêt (envoi à la main).
+ */
 export const POST: APIRoute = async ({ request }) => {
   let raw: unknown;
   try {
@@ -38,10 +42,11 @@ export const POST: APIRoute = async ({ request }) => {
   return adminRoute('create', async () => {
     const db = getDb();
     const inv = await createInvitation(db, parsed.data);
-    let channel: 'email' | 'whatsapp' | null = null;
+    let channel: 'email' | 'whatsapp' | 'wa_me' | null = null;
     if (parsed.data.send) {
-      channel = inv.email ? 'email' : inv.phoneE164 ? 'whatsapp' : null;
-      if (channel) await queueSend(db, inv.id, channel, 'invitation');
+      if (inv.email) channel = 'email';
+      else if (inv.phoneE164) channel = whatsappApiEnabled() ? 'whatsapp' : 'wa_me';
+      if (channel === 'email' || channel === 'whatsapp') await queueSend(db, inv.id, channel, 'invitation');
     }
     const [created, kpis] = await Promise.all([
       getAdminInvitation(db, inv.id, getEnv().PUBLIC_URL),

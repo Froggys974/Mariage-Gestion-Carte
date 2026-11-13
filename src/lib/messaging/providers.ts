@@ -82,6 +82,11 @@ export function smtpError(err: unknown): Error & { retryable: boolean } {
   return Object.assign(new Error(text || String(err)), { retryable: !permanent });
 }
 
+/** L'envoi WhatsApp automatique n'existe que si l'API de Meta est configurée (sinon : wa.me à la main). */
+export function whatsappApiEnabled(): boolean {
+  return getEnv().WHATSAPP_PROVIDER === 'cloud';
+}
+
 /** Factice : garde les messages en mémoire (tests) et les journalise sans contenu personnel. */
 export class FakeEmailProvider implements EmailProvider {
   readonly name = 'fake';

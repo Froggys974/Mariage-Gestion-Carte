@@ -457,6 +457,11 @@ export const admin = {
     resendEmail: 'Renvoyer par email',
     resendWhatsapp: 'Renvoyer par WhatsApp',
     resendManual: 'WhatsApp sans API (wa.me)',
+    // NOUVEAU : WhatsApp automatique non configuré
+    whatsappOff: 'Envoi WhatsApp automatique non configuré (API de Meta) : utilisez « WhatsApp sans API ».',
+    createdWaMe: (n: string) =>
+      `Invitation créée pour ${n} : WhatsApp s’ouvre avec le message prêt, appuyez sur Envoyer.`,
+    openWhatsapp: 'Ouvrir WhatsApp',
     noChannel: 'Aucun contact pour ce canal.',
     queued: 'Envoi ajouté à la file.',
     edit: 'Modifier',

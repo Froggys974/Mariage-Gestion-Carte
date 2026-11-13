@@ -1,0 +1,2 @@
+ALTER TABLE "seating_table" DROP CONSTRAINT "seating_table_seats_ck";--> statement-breakpoint
+ALTER TABLE "seating_table" ADD CONSTRAINT "seating_table_seats_ck" CHECK ("seating_table"."seat_count" between 2 and 24);

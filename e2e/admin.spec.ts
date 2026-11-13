@@ -56,7 +56,12 @@ test('6. admin : se connecter, créer une invitation, copier le lien, placer une
   await page.getByPlaceholder('Prénom', { exact: true }).fill('Jeanne');
   await page.getByPlaceholder('Nom', { exact: true }).fill(last);
   await page.getByPlaceholder('Téléphone', { exact: true }).fill(phone);
+  // sans email et sans API WhatsApp : WhatsApp (wa.me) s'ouvre avec le message et le lien personnel
+  const popup = page.waitForEvent('popup');
   await page.getByRole('button', { name: 'Envoyer le faire-part' }).click();
+  const wa = await popup;
+  await expect.poll(() => wa.url(), { timeout: 15_000 }).toMatch(/wa\.me|whatsapp\.com/);
+  await wa.close();
   await expect(
     page
       .getByRole('status')
@@ -81,7 +86,7 @@ test('6. admin : se connecter, créer une invitation, copier le lien, placer une
           await sql`select count(*)::int as n from send_log s join invitation i on i.id = s.invitation_id where i.contact_last_name = ${last} and s.channel = 'lien'`
         )[0]?.n,
     )
-    .toBe(1);
+    .toBe(2); // wa.me à la création + lien copié
 
   // plan de table : une table ronde, puis Camille (une des mariés) sur une chaise
   await page.getByRole('link', { name: 'Plan de table' }).click();

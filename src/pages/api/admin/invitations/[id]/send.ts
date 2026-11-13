@@ -9,6 +9,7 @@ import { getDb } from '~/lib/db/client';
 import { invitation } from '~/lib/db/schema';
 import { getEnv } from '~/lib/env';
 import { problem, readJson } from '~/lib/http';
+import { whatsappApiEnabled } from '~/lib/messaging/providers';
 
 /** Envoi unitaire : email / WhatsApp (file d'attente) ou trace d'un envoi manuel (lien copié, wa.me). */
 export const POST: APIRoute = async ({ params, request }) => {
@@ -25,6 +26,7 @@ export const POST: APIRoute = async ({ params, request }) => {
   if ((channel === 'email' && !inv.email) || (channel === 'whatsapp' && !inv.phoneE164)) {
     return problem(400, 'no_contact');
   }
+  if (channel === 'whatsapp' && !whatsappApiEnabled()) return problem(409, 'whatsapp_off');
   return adminRoute('send', async () => {
     if (channel === 'email' || channel === 'whatsapp') {
       await queueSend(db, inv.id, channel, inv.status === 'not_sent' ? 'invitation' : 'relance');

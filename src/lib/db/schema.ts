@@ -273,7 +273,7 @@ export const seatingTable = pgTable(
   },
   (t) => [
     index('seating_table_plan_idx').on(t.planId),
-    check('seating_table_seats_ck', sql`${t.seatCount} between 2 and 16`),
+    check('seating_table_seats_ck', sql`${t.seatCount} between 2 and 24`),
   ],
 );
 

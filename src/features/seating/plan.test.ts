@@ -39,9 +39,10 @@ describe('géométrie des chaises', () => {
   it('largeur minimale 110 pour une petite table rectangulaire', () => {
     expect(tableGeometry({ shape: 'rect', n: 2 }).w).toBe(110);
   });
-  it('borne les chaises (2 à 16) et la position dans la salle', () => {
+  it('borne les chaises (2 à 24) et la position dans la salle', () => {
     expect(clampSeats(1)).toBe(TABLE_GEOM.MIN_SEATS);
-    expect(clampSeats(40)).toBe(16);
+    expect(clampSeats(40)).toBe(24);
+    expect(clampSeats(24)).toBe(24);
     expect(clampTablePosition(0, 2000)).toEqual({ x: 60, y: 710 });
   });
 });
