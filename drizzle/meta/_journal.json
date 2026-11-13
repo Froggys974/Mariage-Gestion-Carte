@@ -43,6 +43,13 @@
       "when": 1794528036930,
       "tag": "0005_card_email",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794610851182,
+      "tag": "0006_table_24_seats",
+      "breakpoints": true
     }
   ]
 }

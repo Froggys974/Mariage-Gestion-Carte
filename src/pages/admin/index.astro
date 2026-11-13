@@ -48,7 +48,14 @@ Astro.response.headers.set('cache-control', 'no-store');
 <AdminLayout tab={tab} wide={tab === 'plan'}>
   {tab === 'list' ? <KpisLive slot="kpis" client:load kpis={kpis} /> : <Kpis slot="kpis" kpis={kpis} />}
   {tab === 'list' && (
-    <InvitationsApp client:load initial={list} kpis={kpis} publicHost={publicHost} wedding={w} />
+    <InvitationsApp
+      client:load
+      initial={list}
+      kpis={kpis}
+      publicHost={publicHost}
+      wedding={w}
+      whatsappApi={env.WHATSAPP_PROVIDER === 'cloud'}
+    />
   )}
   {tab === 'wedding' && (
     <WeddingForm
