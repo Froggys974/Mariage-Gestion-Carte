@@ -1,0 +1,230 @@
+---
+/** Plan de table imprimable (ou « Enregistrer en PDF » depuis la boîte d'impression du navigateur). */
+import { admin, meta } from '~/content/fr';
+import { ROOM, tableGeometry } from '~/features/seating/plan-geometry';
+import { seatInitials } from '~/features/seating/plan-ops';
+import { planPeople, resolvePlan } from '~/features/seating/seating.service';
+import { getDb } from '~/lib/db/client';
+import '~/styles/tokens.css';
+import '~/styles/fonts.css';
+
+const t = admin.plan;
+const db = getDb();
+const plan = await resolvePlan(db, Astro.url.searchParams.get('plan'));
+const people = new Map(
+  (await planPeople(db)).flatMap((f) => f.people.map((p) => [p.id, { ...p, family: f.name }] as const)),
+);
+const tables = plan.tables.map((x) => {
+  const g = tableGeometry(x);
+  const seats = g.seats.map(([sx, sy], k) => {
+    const p = people.get(plan.assign[`${x.id}:${k}`] ?? '');
+    return { sx, sy, p };
+  });
+  return { ...x, g, seats };
+});
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{t.printTitle} · {plan.name} · {meta.adminTitle}</title>
+  </head>
+  <body>
+    <header class="pp-head">
+      <div>
+        <div class="pp-eyebrow">{admin.eyebrow}</div>
+        <h1>
+          {t.printTitle} · {plan.name}
+        </h1>
+      </div>
+      <button class="pp-print" type="button" data-print>
+        {t.printNow}
+      </button>
+    </header>
+    <svg class="pp-room" viewBox={`0 0 ${ROOM.W} ${ROOM.H}`} role="img" aria-label={t.printTitle}>
+      <rect x="1" y="1" width={ROOM.W - 2} height={ROOM.H - 2} rx="12" fill="none" stroke="#c9b483" />
+      <rect
+        x={ROOM.DANCE.x}
+        y={ROOM.DANCE.y}
+        width={ROOM.DANCE.w}
+        height={ROOM.DANCE.h}
+        rx="8"
+        fill="none"
+        stroke="#c9b483"
+        stroke-dasharray="6 5"
+      />
+      <text x={ROOM.DANCE.x + ROOM.DANCE.w / 2} y={ROOM.DANCE.y + 40} text-anchor="middle" class="pp-small">
+        {t.dance}
+      </text>
+      {tables.map((x) => (
+        <g transform={`translate(${x.x} ${x.y})`}>
+          {x.shape === 'round' ? (
+            <circle r={x.g.w / 2} fill="#f2ead7" stroke="#a8894a" />
+          ) : (
+            <rect
+              x={-x.g.w / 2}
+              y={-x.g.h / 2}
+              width={x.g.w}
+              height={x.g.h}
+              rx="10"
+              fill="#f2ead7"
+              stroke="#a8894a"
+            />
+          )}
+          <text text-anchor="middle" y="5" class="pp-table">
+            {x.name}
+          </text>
+          {x.seats.map((s) => (
+            <g transform={`translate(${s.sx.toFixed(1)} ${s.sy.toFixed(1)})`}>
+              <circle
+                r="17"
+                fill={s.p ? '#e5b96b' : '#fff'}
+                stroke="#a8894a"
+                stroke-dasharray={s.p ? undefined : '3 3'}
+              />
+              {s.p && (
+                <text text-anchor="middle" y="4" class="pp-ini">
+                  {seatInitials(s.p.first, s.p.last)}
+                </text>
+              )}
+            </g>
+          ))}
+        </g>
+      ))}
+    </svg>
+    <h2 class="pp-h2">{t.printList}</h2>
+    <div class="pp-list">
+      {tables.map((x) => (
+        <section class="pp-table-list">
+          <h3>{x.name}</h3>
+          <ol>
+            {x.seats.map((s) => (
+              <li class={s.p ? '' : 'pp-free'}>
+                {s.p ? `${s.p.first} ${s.p.last}`.trim() : t.printEmpty}
+                {s.p?.note && <span class="pp-note"> — {s.p.note}</span>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
+    <script>
+      document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
+    </script>
+  </body>
+</html>
+
+<style>
+  :global(body) {
+    margin: 0;
+    padding: 24px;
+    background: #fbf7ee;
+    color: #1c3326;
+    font-family: var(--font-body);
+  }
+  .pp-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .pp-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #7a6a45;
+  }
+  h1 {
+    margin: 4px 0 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 30px;
+  }
+  .pp-print {
+    border: none;
+    background: #e5b96b;
+    color: #14261c;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    min-height: 48px;
+  }
+  .pp-room {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+  }
+  .pp-small {
+    font-size: 12px;
+    letter-spacing: 3px;
+    fill: #7a6a45;
+  }
+  .pp-table {
+    font-family: var(--font-display);
+    font-size: 15px;
+    fill: #1c3326;
+  }
+  .pp-ini {
+    font-size: 11px;
+    font-weight: 600;
+    fill: #14261c;
+  }
+  .pp-h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 24px;
+    margin: 20px 0 10px;
+  }
+  .pp-list {
+    columns: 3 220px;
+    column-gap: 24px;
+  }
+  .pp-table-list {
+    break-inside: avoid;
+    margin-bottom: 16px;
+  }
+  .pp-table-list h3 {
+    margin: 0 0 4px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .pp-table-list ol {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .pp-free {
+    color: #a8894a;
+    font-style: italic;
+  }
+  .pp-note {
+    color: #8e1630;
+    font-size: 12px;
+  }
+  @media print {
+    :global(body) {
+      padding: 0;
+    }
+    .pp-print {
+      display: none;
+    }
+    .pp-room {
+      max-height: none;
+      page-break-after: always;
+    }
+    @page {
+      size: A4 landscape;
+      margin: 12mm;
+    }
+  }
+</style>
