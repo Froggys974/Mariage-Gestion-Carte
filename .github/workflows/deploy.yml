@@ -1,12 +1,11 @@
-# Déploiement continu : quand la CI est verte sur main, le code est envoyé au serveur qui reconstruit le site.
+# Déploiement continu : à chaque merge dans main (la CI a tourné sur la PR, obligatoire avant le merge),
+# le code est envoyé au serveur qui reconstruit le site.
 # Réglages (une fois) : doc/CONFIGURATION.md § 8. Les secrets du site restent dans /opt/mariage/.env sur le
 # serveur ; GitHub ne garde que la clé de déploiement (qui ne peut lancer que /usr/local/bin/mariage-deploy).
 name: Déploiement
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
     branches: [main]
   # relance à la main : GitHub → Actions → Déploiement → Run workflow
   workflow_dispatch:
@@ -21,7 +20,6 @@ permissions:
 jobs:
   deploy:
     name: Mise en ligne
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -30,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ github.sha }}
 
       - name: Clé de déploiement et empreinte du serveur
         env:
@@ -54,7 +52,7 @@ jobs:
         env:
           PUBLIC_URL: ${{ vars.PUBLIC_URL }}
         run: |
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl -fsS "$PUBLIC_URL/api/health"; then echo; echo "✓ $PUBLIC_URL répond"; exit 0; fi
             sleep 10
           done
