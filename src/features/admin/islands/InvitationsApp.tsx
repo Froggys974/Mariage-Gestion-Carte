@@ -30,6 +30,8 @@ interface Props {
   publicHost: string;
   /** infos du mariage (texte du message WhatsApp sans API) */
   wedding: WeddingLabels;
+  /** l'API WhatsApp de Meta est configurée (envoi automatique) ; sinon seulement wa.me */
+  whatsappApi: boolean;
 }
 
 type Sort = AdminInvitation[];
@@ -78,7 +80,13 @@ function waLink(w: WeddingLabels, inv: AdminInvitation): string {
     : `https://wa.me/?text=${text}`;
 }
 
-export default function InvitationsApp({ initial, kpis: initialKpis, publicHost, wedding }: Props) {
+export default function InvitationsApp({
+  initial,
+  kpis: initialKpis,
+  publicHost,
+  wedding,
+  whatsappApi,
+}: Props) {
   const [list, setList] = useState<Sort>(initial);
   const [kpis, setKpis] = useState(initialKpis);
   useEffect(() => {
@@ -220,6 +228,8 @@ export default function InvitationsApp({ initial, kpis: initialKpis, publicHost,
   return (
     <div class="inv">
       <NewInvitation
+        wedding={wedding}
+        whatsappApi={whatsappApi}
         onCreated={(inv, k, msg) => {
           setList((l) => [inv, ...l]);
           setKpis(k);
@@ -306,7 +316,13 @@ export default function InvitationsApp({ initial, kpis: initialKpis, publicHost,
           <button class="a-btn a-btn--outline" type="button" onClick={() => bulkSend('email')}>
             {t.bulkEmail}
           </button>
-          <button class="a-btn a-btn--outline" type="button" onClick={() => bulkSend('whatsapp')}>
+          <button
+            class="a-btn a-btn--outline"
+            type="button"
+            onClick={() => bulkSend('whatsapp')}
+            disabled={!whatsappApi}
+            title={whatsappApi ? undefined : t.whatsappOff}
+          >
             {t.bulkWhatsapp}
           </button>
           <button class="a-btn a-btn--danger" type="button" onClick={bulkDelete}>
@@ -397,8 +413,9 @@ export default function InvitationsApp({ initial, kpis: initialKpis, publicHost,
                     <button
                       role="menuitem"
                       type="button"
-                      disabled={!inv.phone}
+                      disabled={!inv.phone || !whatsappApi}
                       onClick={() => send(inv, 'whatsapp')}
+                      title={whatsappApi ? undefined : t.whatsappOff}
                     >
                       {t.resendWhatsapp}
                     </button>
@@ -464,9 +481,14 @@ export default function InvitationsApp({ initial, kpis: initialKpis, publicHost,
 
 function NewInvitation({
   onCreated,
+  wedding,
+  whatsappApi,
 }: {
   onCreated: (inv: AdminInvitation, k: KpiData, msg: string) => void;
+  wedding: WeddingLabels;
+  whatsappApi: boolean;
 }) {
+  const [waLinkToOpen, setWaLinkToOpen] = useState<string | null>(null);
   const [f, setF] = useState({ first: '', last: '', email: '', phone: '' });
   const [hint, setHint] = useState<string>(t.hint);
   const [error, setError] = useState(false);
@@ -490,15 +512,37 @@ function NewInvitation({
     }
     setBusy(true);
     setTypo(null);
-    const r = await api<{ invitation: AdminInvitation; kpis: KpiData; channel: 'email' | 'whatsapp' | null }>(
-      'POST',
-      '/api/admin/invitations',
-      { ...fields, send: true, confirmEmail },
-    );
+    setWaLinkToOpen(null);
+    // sans email ni API WhatsApp : on ouvre l'onglet tout de suite (pendant le clic), sinon le navigateur le
+    // bloquerait après la réponse du serveur ; il recevra le lien wa.me une fois l'invitation créée
+    const waTab =
+      !fields.email.trim() && fields.phone.trim() && !whatsappApi
+        ? window.open('about:blank', '_blank')
+        : null;
+    const r = await api<{
+      invitation: AdminInvitation;
+      kpis: KpiData;
+      channel: 'email' | 'whatsapp' | 'wa_me' | null;
+    }>('POST', '/api/admin/invitations', { ...fields, send: true, confirmEmail });
     setBusy(false);
+    if (!r.ok || r.data.channel !== 'wa_me') waTab?.close();
     if (r.ok) {
       const name = `${r.data.invitation.first} ${r.data.invitation.last}`;
-      const msg = r.data.channel ? t.createdAndQueued(name, channelLabels[r.data.channel]) : t.created(name);
+      let msg: string;
+      if (r.data.channel === 'wa_me') {
+        const link = waLink(wedding, r.data.invitation);
+        if (waTab) waTab.location.href = link;
+        else setWaLinkToOpen(link); // onglet bloqué : bouton « Ouvrir WhatsApp »
+        msg = t.createdWaMe(name);
+        const logged = await api<{ invitation: AdminInvitation }>(
+          'POST',
+          `/api/admin/invitations/${r.data.invitation.id}/send`,
+          { channel: 'wa_me' },
+        );
+        if (logged.ok) r.data.invitation = logged.data.invitation;
+      } else {
+        msg = r.data.channel ? t.createdAndQueued(name, channelLabels[r.data.channel]) : t.created(name);
+      }
       onCreated(r.data.invitation, r.data.kpis, msg);
       setF({ first: '', last: '', email: '', phone: '' });
       setHint(msg);
@@ -561,6 +605,11 @@ function NewInvitation({
         <div class={error ? 'a-error' : 'a-hint'} role="status">
           {hint}
         </div>
+        {waLinkToOpen && (
+          <a class="a-btn a-btn--outline" href={waLinkToOpen} target="_blank" rel="noopener noreferrer">
+            {t.openWhatsapp}
+          </a>
+        )}
       </div>
       {typo && (
         <TypoChoice

@@ -14,7 +14,7 @@ export const ROOM = {
 
 export const TABLE_GEOM = {
   MIN_SEATS: 2,
-  MAX_SEATS: 16,
+  MAX_SEATS: 24,
   DEFAULT_ROUND: 8,
   DEFAULT_RECT: 10,
   /** ronde : rayon max(42, n·7,5), chaises sur un cercle de rayon + 26 */

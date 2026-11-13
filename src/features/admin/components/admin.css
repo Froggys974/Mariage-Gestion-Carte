@@ -304,10 +304,18 @@ select.a-input {
 }
 
 /* Liste des invitations */
+/* pas d'overflow: hidden : le menu « ↻ » de la dernière ligne doit pouvoir dépasser du cadre ;
+   les coins arrondis sont portés par la première et la dernière ligne */
 .a-list {
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  overflow: hidden;
+}
+.a-list > :first-child {
+  border-radius: 15px 15px 0 0;
+}
+.a-list > :last-child,
+.a-list > :last-child > :last-child {
+  border-radius: 0 0 15px 15px;
 }
 .a-list__head,
 .a-row {

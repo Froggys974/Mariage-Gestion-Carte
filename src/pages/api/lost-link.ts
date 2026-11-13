@@ -8,6 +8,7 @@ import { getEnv } from '~/lib/env';
 import { clientIp, json, readJson } from '~/lib/http';
 import { logger } from '~/lib/logger';
 import { normalizePhone } from '~/lib/phone';
+import { whatsappApiEnabled } from '~/lib/messaging/providers';
 import { createDbLimiter, hashKey, LIMITS } from '~/lib/rate-limit';
 
 const body = z.object({ contact: z.string().trim().min(3).max(200) });
@@ -48,7 +49,10 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       ),
     )
     .limit(1);
-  if (inv) await queueSend(db, inv.id, isEmail ? 'email' : 'whatsapp', 'lien_perdu');
+  // par téléphone : seulement si l'envoi WhatsApp automatique existe (sinon rien ne partirait vraiment)
+  if (inv && (isEmail || whatsappApiEnabled())) {
+    await queueSend(db, inv.id, isEmail ? 'email' : 'whatsapp', 'lien_perdu');
+  }
   logger.info({ found: Boolean(inv) }, 'lien perdu : demande');
   return same;
 };

@@ -11,6 +11,7 @@ import { invitation, otpChallenge } from '~/lib/db/schema';
 import { getEnv } from '~/lib/env';
 import { LIMITS } from '~/lib/rate-limit';
 import { safeEqual } from '~/lib/auth/session';
+import { whatsappApiEnabled } from '~/lib/messaging/providers';
 import { queueSend } from '../messaging/send.service';
 
 export const OTP = {
@@ -82,7 +83,7 @@ export async function startChallenge(db: Db, first: string, last: string): Promi
       .select({ email: invitation.email, phone: invitation.phoneE164 })
       .from(invitation)
       .where(eq(invitation.id, invitationId));
-    const channel = inv?.email ? 'email' : inv?.phone ? 'whatsapp' : null;
+    const channel = inv?.email ? 'email' : inv?.phone && whatsappApiEnabled() ? 'whatsapp' : null;
     if (channel) await queueSend(db, invitationId, channel, 'code', { code });
   }
   return { challengeId: id };
