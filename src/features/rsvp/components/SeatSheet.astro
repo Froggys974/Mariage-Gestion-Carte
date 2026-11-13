@@ -1,0 +1,94 @@
+---
+/** Feuille « Qui de votre famille s'assoit ici ? » : prénom, nom, allergies (avec mention RGPD). */
+import Sheet from '~/components/ui/Sheet.astro';
+import { sheet } from '~/content/fr';
+
+interface Props {
+  purgeLabel: string;
+}
+const { purgeLabel } = Astro.props;
+---
+
+<Sheet id="seat" title={sheet.titleNew} scroll>
+  <form class="seat-form" data-seat-form novalidate>
+    <p class="seat-form__lead">{sheet.notSeating}</p>
+    <label class="field">
+      {sheet.first}
+      <input
+        class="field__input"
+        name="first"
+        autocomplete="given-name"
+        placeholder={sheet.first}
+        maxlength="80"
+      />
+    </label>
+    <label class="field">
+      {sheet.last}
+      <input
+        class="field__input"
+        name="last"
+        autocomplete="family-name"
+        placeholder={sheet.last}
+        maxlength="80"
+      />
+    </label>
+    <div class="seat-form__note">
+      <label class="field">
+        {sheet.note}
+        <textarea
+          class="field__input"
+          name="note"
+          rows="3"
+          maxlength="300"
+          placeholder={sheet.notePlaceholder}
+          aria-describedby="seat-note-help"
+        ></textarea>
+      </label>
+      <p class="field__help" id="seat-note-help">
+        {sheet.noteInfo(purgeLabel)}
+        <a href="/confidentialite" target="_blank" rel="noopener">
+          {sheet.privacyLink}
+        </a>
+      </p>
+    </div>
+    <p class="sheet__error" data-seat-error role="alert" hidden>
+      {sheet.nameRequired}
+    </p>
+    <div class="sheet__actions">
+      <button class="sheet__submit" type="submit">
+        {sheet.confirm}
+      </button>
+      <button class="sheet__danger" type="button" data-seat-remove>
+        {sheet.remove}
+      </button>
+    </div>
+  </form>
+</Sheet>
+
+<style>
+  .seat-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .seat-form__note {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .seat-form__note p {
+    margin: 0;
+  }
+  .seat-form__lead {
+    margin: 0;
+    padding: 10px 14px;
+    border-left: 2px solid var(--or-500);
+    background: rgba(229, 185, 107, 0.07);
+    border-radius: 0 var(--radius-field) var(--radius-field) 0;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--or-300);
+  }
+</style>

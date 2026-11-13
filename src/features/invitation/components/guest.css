@@ -1,0 +1,668 @@
+/*
+ * Coque du site invité — valeurs reprises au pixel près de « Faire-part v3.dc.html ».
+ * Aucun style en ligne (CSP) : les valeurs dynamiques sont posées par le JS via le CSSOM.
+ */
+html,
+body.is-fixed {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body.is-fixed ::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.g-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: var(--font-body);
+  background: radial-gradient(120% 90% at 50% 0%, #17362a 0%, #0b1a13 60%, #070f0b 100%);
+  touch-action: pan-y;
+}
+.g-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 18% 28%, rgba(229, 185, 107, 0.12), transparent 42%),
+    radial-gradient(circle at 82% 72%, rgba(216, 70, 143, 0.1), transparent 45%);
+}
+/* Halo : position par transform (et non left/top) pour n'animer que transform. */
+.g-glow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 130vmax;
+  height: 130vmax;
+  margin: -65vmax 0 0 -65vmax;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(229, 185, 107, 0.16), transparent 55%);
+  transform: translate3d(50vw, 20vh, 0);
+  transition: transform var(--dur-glow) var(--ease-standard);
+}
+.g-floaters {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.g-floater {
+  position: absolute;
+}
+
+/* ---- Scènes ---- */
+.g-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 1100px;
+  perspective-origin: 50% 45%;
+  transform-style: preserve-3d;
+}
+.scene {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(96px + env(safe-area-inset-top, 0px)) max(22px, env(safe-area-inset-right, 0px))
+    calc(96px + max(0px, env(safe-area-inset-bottom, 0px) - 18px)) max(22px, env(safe-area-inset-left, 0px));
+}
+/* will-change seulement pendant le mouvement */
+.g-stage.is-moving .scene {
+  will-change: transform, opacity;
+}
+.scene--hidden {
+  visibility: hidden;
+}
+.scene--center {
+  text-align: center;
+}
+.scene__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: auto 0;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--or-500);
+}
+
+/* ---- Boutons communs ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  min-height: 48px;
+  font-size: 12px;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast),
+    border-color var(--dur-fast),
+    color var(--dur-fast);
+}
+.btn--gold {
+  border: 1px solid rgba(229, 185, 107, 0.6);
+  background: rgba(229, 185, 107, 0.1);
+  color: var(--or-300);
+  letter-spacing: 0.2em;
+  padding: 16px 26px;
+}
+.btn--primary {
+  border: none;
+  background: var(--or-500);
+  color: var(--text-on-gold);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  padding: 15px 20px;
+}
+.btn--secondary {
+  border: 1px solid rgba(247, 243, 234, 0.35);
+  background: transparent;
+  color: var(--text-primary);
+  letter-spacing: 0.14em;
+  padding: 15px 20px;
+}
+.btn--ghost {
+  border: none;
+  background: transparent;
+  color: rgba(247, 243, 234, 0.55);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  padding: 8px;
+  min-height: 0;
+}
+@media (hover: hover) {
+  .btn--gold:hover {
+    background: rgba(229, 185, 107, 0.22);
+  }
+  .btn--primary:hover {
+    background: var(--or-300);
+  }
+  .btn--secondary:hover {
+    border-color: var(--or-500);
+  }
+  .btn--ghost:hover {
+    color: var(--or-300);
+  }
+}
+.btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* ---- En-tête fixe ---- */
+.g-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px max(18px, env(safe-area-inset-right, 0px)) 14px max(18px, env(safe-area-inset-left, 0px));
+  padding-top: max(14px, env(safe-area-inset-top, 0px));
+  background: linear-gradient(#0b1a13 20%, rgba(11, 26, 19, 0));
+  pointer-events: none;
+}
+.g-mono {
+  font-family: var(--font-display);
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+}
+.g-mono span {
+  color: var(--or-500);
+}
+.g-burger {
+  pointer-events: auto;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(247, 243, 234, 0.25);
+  background: rgba(11, 26, 19, 0.55);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 0;
+  -webkit-backdrop-filter: var(--blur-glass);
+  backdrop-filter: var(--blur-glass);
+}
+.g-burger span {
+  display: block;
+  width: 16px;
+  height: 1px;
+  background: var(--text-primary);
+}
+.g-burger span:last-child {
+  width: 10px;
+  background: var(--or-500);
+}
+
+/* ---- Points de navigation ---- */
+.g-dots {
+  position: absolute;
+  right: max(10px, env(safe-area-inset-right, 0px));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.g-dot {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+/* Zone tactile élargie (48 × 34) sans changer l'espacement du design. */
+.g-dot::after {
+  content: '';
+  position: absolute;
+  left: -14px;
+  right: -6px;
+  top: -3px;
+  bottom: -3px;
+}
+.g-dot span {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(247, 243, 234, 0.35);
+  transform: scale(0.5556);
+  transition:
+    transform 0.4s,
+    background-color 0.4s;
+}
+.g-dot[aria-current='step'] span {
+  background: var(--or-500);
+  transform: scale(1);
+}
+
+/* ---- Bas d'écran ---- */
+.g-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  /* le fondu commence au-dessus du repère : un contenu qui défile passe dessous sans chevaucher le texte */
+  padding: 26px 20px max(18px, env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  background: linear-gradient(rgba(11, 26, 19, 0), rgba(11, 26, 19, 0.92) 42%, #0b1a13 70%);
+}
+.g-progress {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.55);
+}
+.g-swipe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  animation: bob 1.8s ease-in-out infinite;
+}
+.g-swipe .g-chevron {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid var(--or-500);
+  border-bottom: 1px solid var(--or-500);
+  transform: rotate(-135deg);
+}
+.g-swipe span:last-child {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--or-500);
+}
+
+/* ---- Calques d'effets ---- */
+.g-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  overflow: hidden;
+}
+.g-motes {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  overflow: hidden;
+  perspective: 900px;
+}
+.g-mote {
+  position: absolute;
+  opacity: 0;
+}
+.fx-petal {
+  position: absolute;
+  border-radius: 60% 40% 60% 40% / 70% 70% 30% 30%;
+}
+.fx-flower {
+  position: absolute;
+}
+
+/* ---- Menu plein écran ---- */
+.g-menu {
+  position: absolute;
+  inset: 0;
+  z-index: 62;
+  background: var(--overlay-menu);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  animation: riseIn 0.35s both;
+}
+.g-menu nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.g-menu__close {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top, 0px));
+  right: max(18px, env(safe-area-inset-right, 0px));
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(247, 243, 234, 0.25);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+}
+.g-menu__item {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 12px 20px;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  animation: riseIn 0.6s both;
+  min-height: 48px;
+}
+.g-menu__item:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.g-menu__item:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.g-menu__item:nth-child(3) {
+  animation-delay: 0.19s;
+}
+.g-menu__item:nth-child(4) {
+  animation-delay: 0.26s;
+}
+.g-menu__item:nth-child(5) {
+  animation-delay: 0.33s;
+}
+.g-menu__item .num {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--or-500);
+}
+.g-menu__item .name {
+  font-family: var(--font-display);
+  font-size: 34px;
+  color: var(--text-primary);
+}
+.g-menu__item[aria-current='step'] .name {
+  color: var(--or-500);
+}
+@media (hover: hover) {
+  .g-menu__item:hover .name {
+    color: var(--or-300);
+  }
+}
+.g-menu__footer {
+  margin-top: 24px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.45);
+}
+
+/* ---- Intro « portes de l'église » (≈ 4,4 s ; --k raccourcit) ---- */
+.intro {
+  --k: 1;
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  overflow: hidden;
+  background: var(--vert-nuit);
+  animation: fadeOut calc(0.9s * var(--k)) calc(3.7s * var(--k)) both;
+}
+html[data-intro='short'] .intro {
+  --k: 0.4;
+}
+html[data-intro='reduced'] .intro {
+  --k: 0.3;
+}
+html[data-intro='none'] .intro {
+  display: none;
+}
+/* Pendant l'intro, l'accueil attend son apparition en fondu (retiré par rise() dans guest-app.ts). */
+html[data-intro-hold] [data-scene='0'] [data-rise] {
+  opacity: 0;
+}
+.intro__bloom {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 74vmin;
+  height: 74vmin;
+  margin-left: -37vmin;
+  margin-top: -37vmin;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 240, 210, 0.95),
+    rgba(229, 185, 107, 0.35) 45%,
+    transparent 70%
+  );
+  animation: bloom calc(2.6s * var(--k)) calc(1.1s * var(--k)) ease-out both;
+}
+.intro__text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+  animation: riseIn calc(1.1s * var(--k)) calc(2s * var(--k)) both;
+}
+.intro__welcome {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(24px, 7vw, 36px);
+  color: var(--text-primary);
+}
+.intro__date {
+  font-size: 10px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--or-500);
+}
+.intro__door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+}
+.intro__door--l {
+  left: 0;
+  background: linear-gradient(100deg, #16241b 0%, #24402f 45%, #0e1a12 100%);
+  border-right: 1px solid rgba(229, 185, 107, 0.45);
+  box-shadow: inset -30px 0 60px rgba(0, 0, 0, 0.5);
+  animation: doorL calc(2.4s * var(--k)) calc(1.2s * var(--k)) var(--ease-door) both;
+}
+.intro__door--r {
+  right: 0;
+  background: linear-gradient(260deg, #16241b 0%, #24402f 45%, #0e1a12 100%);
+  border-left: 1px solid rgba(229, 185, 107, 0.45);
+  box-shadow: inset 30px 0 60px rgba(0, 0, 0, 0.5);
+  animation: doorR calc(2.4s * var(--k)) calc(1.2s * var(--k)) var(--ease-door) both;
+}
+.intro__arch {
+  position: absolute;
+  top: 12%;
+  bottom: 12%;
+  width: 38%;
+  border: 1px solid rgba(229, 185, 107, 0.3);
+}
+.intro__door--l .intro__arch {
+  right: 14px;
+  border-radius: 200px 0 0 200px;
+}
+.intro__door--r .intro__arch {
+  left: 14px;
+  border-radius: 0 200px 200px 0;
+}
+.intro__handle {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--or-500);
+  box-shadow: var(--shadow-glow);
+}
+.intro__door--l .intro__handle {
+  right: 22px;
+}
+.intro__door--r .intro__handle {
+  left: 22px;
+}
+.intro__petal {
+  position: absolute;
+  top: 0;
+  opacity: 0;
+  transform: translate3d(0, -12vh, 0);
+  border-radius: 60% 40% 55% 45%;
+}
+.intro__petal:nth-of-type(1) {
+  left: 10%;
+  width: 14px;
+  height: 14px;
+  background: rgba(251, 247, 238, 0.85);
+  animation: petal 5s calc(2.2s * var(--k)) linear infinite both;
+}
+.intro__petal:nth-of-type(2) {
+  left: 34%;
+  width: 11px;
+  height: 11px;
+  background: rgba(229, 185, 107, 0.9);
+  animation: petal 5.6s calc(2.6s * var(--k)) linear infinite both;
+}
+.intro__petal:nth-of-type(3) {
+  left: 62%;
+  width: 16px;
+  height: 16px;
+  background: rgba(216, 70, 143, 0.8);
+  animation: petal 5.2s calc(3s * var(--k)) linear infinite both;
+}
+.intro__petal:nth-of-type(4) {
+  left: 84%;
+  width: 12px;
+  height: 12px;
+  background: rgba(233, 84, 79, 0.8);
+  animation: petal 6s calc(2.4s * var(--k)) linear infinite both;
+}
+.intro__enter {
+  position: absolute;
+  bottom: max(22px, env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid rgba(247, 243, 234, 0.28);
+  background: rgba(7, 15, 11, 0.4);
+  color: rgba(247, 243, 234, 0.8);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  padding: 13px 22px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  z-index: 5;
+}
+
+/* ---- Petits écrans (≈ 320 × 568) : marges haut / bas resserrées ---- */
+@media (max-height: 620px) and (orientation: portrait), (max-height: 620px) and (min-height: 501px) {
+  .scene {
+    padding-top: calc(80px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(78px + max(0px, env(safe-area-inset-bottom, 0px) - 18px));
+  }
+  .g-bottom {
+    padding-top: 20px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ---- Téléphone à l'horizontale : en-tête et bas d'écran compacts, scènes sur deux colonnes ---- */
+@media (orientation: landscape) and (max-height: 500px) {
+  .g-header {
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+    padding-bottom: 8px;
+  }
+  .g-mono {
+    font-size: 15px;
+  }
+  .g-burger {
+    width: 40px;
+    height: 40px;
+  }
+  .scene {
+    padding: calc(56px + env(safe-area-inset-top, 0px)) max(64px, env(safe-area-inset-right, 0px))
+      calc(46px + max(0px, env(safe-area-inset-bottom, 0px) - 8px)) max(28px, env(safe-area-inset-left, 0px));
+  }
+  .g-bottom {
+    flex-direction: row;
+    justify-content: center;
+    gap: 14px;
+    padding: 18px 20px max(8px, env(safe-area-inset-bottom, 0px));
+  }
+  .g-swipe {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .g-dots {
+    gap: 0;
+  }
+  .g-menu__item {
+    min-height: 44px;
+    padding-block: 6px;
+  }
+  .g-menu__item .name {
+    font-size: 28px;
+  }
+  .g-menu__footer {
+    margin-top: 10px;
+  }
+}
+
+/* ---- Mouvement réduit : simples fondus, pas de boucles ---- */
+@media (prefers-reduced-motion: reduce) {
+  .intro__door--l,
+  .intro__door--r {
+    animation-name: fadeOut;
+  }
+  .intro__bloom,
+  .intro__petal {
+    display: none;
+  }
+  .g-swipe,
+  .wreath__spin,
+  .dress__flower,
+  .seal__breathe,
+  .t-open {
+    animation: none !important;
+  }
+  .g-glow {
+    transition: none;
+  }
+}

@@ -1,0 +1,158 @@
+/* Scène « Le programme » : frise verticale heure · fleur · moment */
+.scene__inner.prog__inner {
+  gap: 26px;
+  width: min(420px, 100%);
+}
+.prog__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.prog__head > p {
+  margin: 0;
+}
+.prog__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 9vw, 44px);
+  line-height: 1.14;
+}
+.prog__date {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--or-300);
+}
+.prog__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.prog__item {
+  --dot: 22px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 4.6em var(--dot) minmax(0, 1fr);
+  column-gap: 14px;
+  padding-bottom: 20px;
+}
+/* trait doré entre deux fleurs */
+.prog__item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: calc(4.6em + 14px + var(--dot) / 2);
+  top: calc(var(--dot) + 4px);
+  bottom: 4px;
+  width: 1px;
+  background: linear-gradient(rgba(229, 185, 107, 0.7), rgba(229, 185, 107, 0.15));
+}
+.prog__time {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: var(--dot);
+  color: var(--or-500);
+  text-align: right;
+  white-space: nowrap;
+}
+.prog__dot {
+  position: relative;
+  width: var(--dot);
+  height: var(--dot);
+}
+.prog__dot > .flower {
+  width: 100%;
+  height: 100%;
+}
+.prog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.prog__body > p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.prog__what {
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: var(--dot);
+  color: var(--text-primary);
+}
+.prog__place {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  color: rgba(247, 243, 234, 0.62);
+}
+.prog__note {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(247, 243, 234, 0.72);
+}
+
+/* ---- Écrans courts ---- */
+@media (max-height: 760px) and (orientation: portrait), (max-height: 760px) and (min-height: 501px) {
+  .scene__inner.prog__inner {
+    gap: 18px;
+  }
+  .prog__head {
+    gap: 10px;
+  }
+  .prog__item {
+    padding-bottom: 14px;
+  }
+}
+@media (max-height: 620px) and (orientation: portrait), (max-height: 620px) and (min-height: 501px) {
+  .prog__title {
+    font-size: 28px;
+  }
+  .prog__date {
+    font-size: 17px;
+  }
+  .prog__time {
+    font-size: 18px;
+  }
+  .prog__what {
+    font-size: 19px;
+  }
+}
+@media (max-width: 340px) {
+  .prog__item {
+    column-gap: 10px;
+    grid-template-columns: 4.2em var(--dot) minmax(0, 1fr);
+  }
+  .prog__item:not(:last-child)::before {
+    left: calc(4.2em + 10px + var(--dot) / 2);
+  }
+}
+
+/* ---- Téléphone à l'horizontale et portables peu hauts : titre à gauche, frise à droite ---- */
+@media (orientation: landscape) and (max-height: 500px),
+  (orientation: landscape) and (max-height: 760px) and (min-width: 900px) {
+  .scene__inner.prog__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: center;
+    column-gap: clamp(28px, 6vw, 72px);
+    width: min(900px, 100%);
+  }
+  .prog__list {
+    padding-block: 4px;
+  }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .prog__title {
+    font-size: clamp(26px, 8vh, 34px);
+  }
+  .prog__item {
+    padding-bottom: 12px;
+  }
+}

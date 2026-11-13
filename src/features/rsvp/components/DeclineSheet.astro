@@ -1,0 +1,22 @@
+---
+/** Feuille de confirmation « Nous ne pourrons pas venir ». */
+import Sheet from '~/components/ui/Sheet.astro';
+import { decline } from '~/content/fr';
+
+interface Props {
+  deadlineLabel: string;
+}
+const { deadlineLabel } = Astro.props;
+---
+
+<Sheet id="decline" title={decline.title}>
+  <p class="sheet__text">{decline.body(deadlineLabel)}</p>
+  <div class="sheet__actions">
+    <button class="sheet__submit" type="button" data-decline-confirm>
+      {decline.confirm}
+    </button>
+    <button class="sheet__cancel" type="button" data-sheet-close>
+      {decline.cancel}
+    </button>
+  </div>
+</Sheet>

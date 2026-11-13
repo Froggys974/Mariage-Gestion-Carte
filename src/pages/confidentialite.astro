@@ -1,0 +1,71 @@
+---
+/** Page « Confidentialité » (RGPD) : responsables, données, finalités, données de santé, droits. */
+import GuestLayout from '~/layouts/GuestLayout.astro';
+import { meta, privacy as t } from '~/content/fr';
+import { getSiteSettings } from '~/features/card/card.service';
+import { getWeddingLabels } from '~/features/wedding/wedding.service';
+import { getDb } from '~/lib/db/client';
+import { formatLongDate } from '~/lib/dates';
+import '~/features/invitation/components/guest.css';
+
+const w = await getWeddingLabels(getDb());
+if (!w) return Astro.rewrite('/bientot');
+const purge = formatLongDate((await getSiteSettings(getDb())).purgeAt);
+---
+
+<GuestLayout title={meta.privacyTitle(w)}>
+  <main class="pv">
+    <p class="eyebrow">{t.eyebrow}</p>
+    <h1 class="pv__title">{t.title}</h1>
+    {t.sections.map((s) => (
+      <section class="pv__section">
+        <h2>{s.h}</h2>
+        <p>{s.p(w.fullNames, w.privacyEmail, purge)}</p>
+      </section>
+    ))}
+    <a class="btn btn--secondary pv__back" href="/">
+      {t.back}
+    </a>
+  </main>
+</GuestLayout>
+
+<style>
+  :global(body) {
+    background: radial-gradient(120% 90% at 50% 0%, #17362a 0%, #0b1a13 60%, #070f0b 100%) fixed;
+  }
+  .pv {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: calc(64px + env(safe-area-inset-top, 0px)) 22px calc(64px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .pv > p {
+    margin: 0;
+  }
+  .pv__title {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(28px, 9vw, 46px);
+    line-height: 1.14;
+  }
+  .pv__section h2 {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 22px;
+    color: var(--or-300);
+  }
+  .pv__section p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.85;
+    color: rgba(247, 243, 234, 0.78);
+  }
+  .pv__back {
+    align-self: flex-start;
+    margin-top: 12px;
+  }
+</style>

@@ -1,0 +1,154 @@
+---
+/** Scène 1 · Le faire‑part : enveloppe à 4 rabats, sceau frangipanier, carte écru (données de l'admin). */
+import Flower from '~/components/ui/Flower.astro';
+import Rich from '~/components/ui/Rich.astro';
+import { card as t } from '~/content/fr';
+import type { BootCard } from '../../invitation/boot';
+import type { WeddingLabels } from '../../wedding/wedding';
+import { splitMessage, splitNames } from '../card.service';
+import './card.css';
+import './photo-frame.css';
+
+interface Props {
+  card: BootCard;
+  wedding: WeddingLabels;
+  /** lien personnel : « Recevoir par email » possible */
+  personal: boolean;
+}
+const { card, wedding, personal } = Astro.props;
+const [name1, name2] = splitNames(card.names);
+const [msg1, msg2] = splitMessage(card.message);
+const placeLines = card.place.split(/\r?\n/);
+const nbsp = (s: string) => s.replace(/ /g, ' ');
+---
+
+<section data-scene="1" class="scene scene--hidden card-scene" aria-labelledby="card-title">
+  <div class="scene__inner card-scene__inner">
+    <h2 data-rise class="eyebrow card-scene__eyebrow" id="card-title">
+      {t.eyebrow}
+    </h2>
+
+    <div data-rise class="card-scene__wrap">
+      <div class="env" data-envelope>
+        <div class="env__face" data-cardface>
+          <div class="env__frame" aria-hidden="true"></div>
+          <div class="env__corner env__corner--tl" aria-hidden="true">
+            <Flower kind="hibiscus" heart={false} />
+          </div>
+          <div class="env__corner env__corner--br" aria-hidden="true">
+            <Flower kind="frangipani" heart={false} />
+          </div>
+          <div data-crise class="env__date">
+            {card.date}
+          </div>
+          <div data-crise class="env__names">
+            <span class="env__nowrap">{name1}</span>
+            {name2 && (
+              <>
+                <br />
+                <span class="env__amp">&amp;</span>
+                <br />
+                {nbsp(name2)}
+              </>
+            )}
+          </div>
+          <div data-crise class="env__rule" aria-hidden="true"></div>
+          <div data-crise class="env__place">
+            {placeLines.map((l, i) => (i === 0 ? l : [<br />, l]))}
+          </div>
+          <div data-crise class="env__times">
+            <span>
+              {t.ceremony} {card.ceremony}
+            </span>
+            <span class="env__sep" aria-hidden="true">
+              ·
+            </span>
+            <span>
+              {t.reception} {card.reception}
+            </span>
+          </div>
+          <div data-crise class:list={['env__photo', { 'env__photo--empty': !card.photo }]}>
+            {card.photo ? (
+              <div
+                class:list={[
+                  'photo-shape',
+                  `photo-shape--${card.frame.shape}`,
+                  { 'photo-shape--loose': card.frame.zoom < 1 },
+                ]}
+                data-photo-frame
+              >
+                <picture>
+                  <source type="image/avif" srcset={card.photo.avif} sizes="(max-width: 400px) 70vw, 280px" />
+                  <source type="image/webp" srcset={card.photo.webp} sizes="(max-width: 400px) 70vw, 280px" />
+                  <img
+                    src={card.photo.fallback}
+                    alt={t.photoAlt(wedding)}
+                    width={card.photo.width}
+                    height={card.photo.height}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </picture>
+              </div>
+            ) : (
+              <span>{t.photoPlaceholder}</span>
+            )}
+          </div>
+          <div data-crise class="env__msg">
+            <span lang="rcf">{msg1}</span>
+            {msg2 && (
+              <>
+                <br />
+                <span class="env__msg2">{msg2}</span>
+              </>
+            )}
+          </div>
+          <div data-shine class="env__shine" aria-hidden="true"></div>
+        </div>
+
+        <div data-flap="l" class="env__flap env__flap--l" aria-hidden="true"></div>
+        <div data-flap="r" class="env__flap env__flap--r" aria-hidden="true"></div>
+        <div data-flap="b" class="env__flap env__flap--b" aria-hidden="true"></div>
+        <div data-flap="t" class="env__flap env__flap--t" aria-hidden="true"></div>
+
+        <button data-seal class="env__seal" type="button" aria-label={t.sealLabel}>
+          <span class="seal__breathe">
+            <span class="seal__glow"></span>
+            <Flower kind="frangipani" heart={false} class="seal__flower" />
+            <span class="seal__heart">&amp;</span>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="card-scene__closed" data-card-closed>
+      <p class="card-scene__tap">{t.tapToOpen}</p>
+      <p class="card-scene__gift">
+        <Rich text={t.gift} />
+      </p>
+    </div>
+    <div class="card-scene__open" data-card-open hidden>
+      <div class="card-scene__row">
+        <button class="btn btn--primary" type="button" data-card-save>
+          {t.save}
+        </button>
+        <button class="btn btn--secondary" type="button" data-go="3">
+          {t.reply}
+        </button>
+      </div>
+      <div class="card-scene__more">
+        {personal && (
+          <button class="btn btn--ghost hit48" type="button" data-card-email>
+            {t.emailButton}
+          </button>
+        )}
+        <button class="btn btn--ghost hit48" type="button" data-card-replay>
+          {t.replay}
+        </button>
+      </div>
+      <p class="card-scene__hint" data-card-hint aria-live="polite">
+        {t.saveHint}
+      </p>
+    </div>
+  </div>
+</section>

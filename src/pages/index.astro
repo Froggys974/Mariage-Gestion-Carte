@@ -1,0 +1,20 @@
+---
+/** « / » sans lien personnel : le faire‑part complet, la table invite à utiliser le lien personnel. */
+import GuestLayout from '~/layouts/GuestLayout.astro';
+import GuestApp from '~/features/invitation/components/GuestApp.astro';
+import { meta } from '~/content/fr';
+import { buildGuestBoot } from '~/features/invitation/invitation.service';
+import { getDb } from '~/lib/db/client';
+
+const boot = await buildGuestBoot(getDb(), null);
+if (!boot) return Astro.rewrite('/bientot');
+Astro.response.headers.set('cache-control', 'private, no-store');
+---
+
+<GuestLayout
+  title={meta.title(boot.wedding)}
+  description={meta.description(boot.wedding)}
+  bodyClass="is-fixed"
+>
+  <GuestApp boot={boot} />
+</GuestLayout>

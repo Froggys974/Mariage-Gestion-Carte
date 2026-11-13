@@ -1,0 +1,142 @@
+---
+/** Lien public facultatif /rsvp : prénom + nom → code à 6 chiffres → lien personnel. */
+import GuestLayout from '~/layouts/GuestLayout.astro';
+import { lost, rsvpPublic as t } from '~/content/fr';
+import { getSiteSettings } from '~/features/card/card.service';
+import { getWeddingLabels } from '~/features/wedding/wedding.service';
+import { getDb } from '~/lib/db/client';
+import '~/features/invitation/components/guest.css';
+import '~/components/ui/sheet.css';
+
+const w = await getWeddingLabels(getDb());
+if (!w) return Astro.rewrite('/bientot');
+const enabled = (await getSiteSettings(getDb())).publicRsvpEnabled;
+Astro.response.headers.set('cache-control', 'no-store');
+---
+
+<GuestLayout title={`${t.title} · ${w.couple}`}>
+  <main class="rp">
+    <p class="eyebrow">{t.eyebrow}</p>
+    {enabled ? (
+      <>
+        <h1 class="rp__title">{t.title}</h1>
+        <form class="rp__form" data-rp-search novalidate>
+          <p class="sheet__text">{t.intro}</p>
+          <label class="field">
+            {t.first}
+            <input class="field__input" name="first" autocomplete="given-name" maxlength="80" required />
+          </label>
+          <label class="field">
+            {t.last}
+            <input class="field__input" name="last" autocomplete="family-name" maxlength="80" required />
+          </label>
+          <p class="sheet__error" data-rp-error role="alert" hidden />
+          <button class="sheet__submit" type="submit">
+            {t.submit}
+          </button>
+        </form>
+        <form class="rp__form" data-rp-verify novalidate hidden>
+          <p class="sheet__text" role="status">
+            {t.codeIntro}
+          </p>
+          <label class="field">
+            {t.codeLabel}
+            <input
+              class="field__input rp__code"
+              name="code"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxlength="6"
+              required
+            />
+          </label>
+          <p class="sheet__error" data-rp-code-error role="alert" hidden />
+          <button class="sheet__submit" type="submit">
+            {t.verify}
+          </button>
+          <button class="btn btn--ghost hit48" type="button" data-rp-restart>
+            {t.restart}
+          </button>
+        </form>
+        <script
+          type="application/json"
+          id="rp-texts"
+          set:html={JSON.stringify({ missing: t.missing, badCode: t.badCode, tooMany: t.tooMany })}
+        />
+      </>
+    ) : (
+      <>
+        <h1 class="rp__title">{t.disabledTitle}</h1>
+        <p class="sheet__text">{t.disabledBody}</p>
+        <a class="sheet__submit rp__link" href="/?intro=0&scene=5&lost=1">
+          {lost.submit}
+        </a>
+      </>
+    )}
+    <a class="btn btn--ghost hit48 rp__back" href="/">
+      {t.back}
+    </a>
+  </main>
+</GuestLayout>
+
+<script>
+  import { mount } from '../features/rsvp/client/rsvp-public';
+  mount();
+</script>
+
+<style>
+  .rp {
+    min-height: 100vh;
+    min-height: 100dvh;
+    max-width: 440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+    padding: calc(64px + env(safe-area-inset-top, 0px)) 22px calc(48px + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+  }
+  .rp p,
+  .rp h1 {
+    margin: 0;
+  }
+  .rp__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(26px, 8vw, 40px);
+    line-height: 1.2;
+  }
+  .rp__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+  }
+  .rp__form[hidden] {
+    display: none;
+  }
+  .rp__code {
+    font-size: 22px;
+    letter-spacing: 0.4em;
+    text-align: center;
+  }
+  /* .sheet__submit grandit dans les rangées de boutons des feuilles (flex: 1) ; ici la page est une
+     colonne de toute la hauteur : sans ce réglage le bouton s'étirerait sur l'écran. */
+  .rp .sheet__submit {
+    flex: none;
+  }
+  .rp__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+  .rp__back {
+    align-self: center;
+  }
+  :global(body) {
+    background: radial-gradient(120% 90% at 50% 0%, #17362a 0%, #0b1a13 60%, #070f0b 100%) fixed;
+  }
+</style>
