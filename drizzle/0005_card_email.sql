@@ -1,0 +1,1 @@
+ALTER TYPE "public"."send_purpose" ADD VALUE 'carte';

@@ -1,0 +1,21 @@
+CREATE TABLE "wedding" (
+	"id" smallint PRIMARY KEY DEFAULT 1 NOT NULL,
+	"partner1_first" text NOT NULL,
+	"partner1_last" text NOT NULL,
+	"partner2_first" text NOT NULL,
+	"partner2_last" text NOT NULL,
+	"wedding_date" date NOT NULL,
+	"ceremony_time" text NOT NULL,
+	"reception_time" text DEFAULT '' NOT NULL,
+	"venue_name" text NOT NULL,
+	"venue_city" text NOT NULL,
+	"venue_region" text DEFAULT '' NOT NULL,
+	"reception_place" text DEFAULT '' NOT NULL,
+	"contact_email" text NOT NULL,
+	"contact_phone" text DEFAULT '' NOT NULL,
+	"contact_phone_label" text DEFAULT '' NOT NULL,
+	"privacy_email" text NOT NULL,
+	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "wedding_singleton_ck" CHECK ("wedding"."id" = 1)
+);

@@ -1,0 +1,1 @@
+ALTER TABLE "card_settings" ADD COLUMN "programme" jsonb;

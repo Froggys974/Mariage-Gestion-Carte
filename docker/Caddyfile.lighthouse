@@ -1,0 +1,6 @@
+# Mesure Lighthouse (CI et poste local) : même compression qu'en production devant le serveur Node.
+# Lancé par `pnpm lighthouse:proxy` ; le serveur de production doit écouter sur le port 4321.
+:8080 {
+	encode zstd gzip
+	reverse_proxy {$UPSTREAM:host.docker.internal:4321}
+}
