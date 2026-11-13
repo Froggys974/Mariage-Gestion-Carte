@@ -1,0 +1,39 @@
+# dépendances et builds
+node_modules/
+.pnpm-store/
+dist/
+.astro/
+coverage/
+
+# secrets — ne jamais commiter
+.env
+.env.*
+!.env.example
+!.env.development.example
+
+# données locales
+data/
+backups/
+*.dump
+
+# tests
+playwright-report/
+test-results/
+blob-report/
+.lighthouseci/
+e2e/.auth/
+
+# divers
+.DS_Store
+Thumbs.db
+*.log
+.vscode/*
+!.vscode/extensions.json
+
+# Fichiers personnels : restent sur le PC, jamais sur GitHub (noms, maquettes d'origine, suivi)
+doc/design/
+doc/design-system/
+doc/README.md
+doc/PROGRESS.md
+.claude/skills/mariage-rc-gn-design/
+public/email/noms.png
