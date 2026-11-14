@@ -228,6 +228,13 @@ export async function updateInvitation(db: Db, id: string, patch: InvitationPatc
     const email = patch.email === undefined ? inv.email : patch.email;
     const phone = patch.phone === undefined ? inv.phoneE164 : patch.phone;
     if (!email && !phone) throw new Error('contact');
+    if (patch.maxSeats !== undefined && patch.maxSeats < inv.maxSeats && inv.status === 'submitted') {
+      const [taken] = await tx
+        .select({ n: sql<number>`count(*)::int` })
+        .from(guest)
+        .where(eq(guest.invitationId, id));
+      if (patch.maxSeats < (taken?.n ?? 0)) throw new Error('seats_below_guests');
+    }
     const [row] = await tx
       .update(invitation)
       .set({

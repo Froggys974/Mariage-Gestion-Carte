@@ -30,8 +30,10 @@ export const seatSchema = z
 
 export const seatsSchema = z
   .array(seatSchema.nullable())
-  .length(SEAT_COUNT)
-  .refine((a) => a[0] !== null, { message: "la chaise de l'invité principal est obligatoire" });
+  .min(1)
+  .max(SEAT_COUNT)
+  .refine((a) => a[0] !== null, { message: "la chaise de l'invité principal est obligatoire" })
+  .transform((a) => [...a, ...Array.from({ length: SEAT_COUNT - a.length }, () => null)]);
 
 export const draftBody = z.object({ seats: seatsSchema });
 export const submitBody = z.object({ seats: seatsSchema, expectedUpdatedAt: z.iso.datetime().nullish() });

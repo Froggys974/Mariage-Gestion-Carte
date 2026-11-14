@@ -56,6 +56,11 @@ test('6. admin : se connecter, créer une invitation, copier le lien, placer une
   await page.getByPlaceholder('Prénom', { exact: true }).fill('Jeanne');
   await page.getByPlaceholder('Nom', { exact: true }).fill(last);
   await page.getByPlaceholder('Téléphone', { exact: true }).fill(phone);
+  await page.getByRole('radio', { name: '+3' }).check();
+  await expect(page.getByText('4 chaises sur sa table : l’invité + 3 accompagnants')).toBeVisible();
+  await page.getByRole('radio', { name: 'Autre' }).check();
+  await page.getByRole('spinbutton', { name: 'Nombre d’accompagnants' }).fill('7');
+  await expect(page.getByText('8 chaises sur sa table : l’invité + 7 accompagnants')).toBeVisible();
   // sans email et sans API WhatsApp : WhatsApp (wa.me) s'ouvre avec le message et le lien personnel
   const popup = page.waitForEvent('popup');
   await page.getByRole('button', { name: 'Envoyer le faire-part' }).click();
@@ -71,6 +76,16 @@ test('6. admin : se connecter, créer une invitation, copier le lien, placer une
   const row = page.locator('.inv__item', { hasText: `Jeanne ${last}` });
   await expect(row).toBeVisible();
   await expect(row).toContainText(phone);
+  await expect(row.locator('.a-row__seats')).toContainText('8 places');
+  await expect(page.getByRole('radio', { name: '+1' })).toBeChecked();
+
+  const token = (await sql`select token from invitation where contact_last_name = ${last}`)[0]
+    ?.token as string;
+  const guestPage = await context.newPage();
+  await guestPage.goto(`/i/${token}?intro=0`);
+  await expect(guestPage.locator('[data-seat3d]')).toHaveCount(8);
+  await expect(guestPage.locator('[data-seat-count]')).toContainText('1 / 8 places');
+  await guestPage.close();
 
   // copier le lien
   await row.getByRole('button', { name: 'Lien' }).click();
