@@ -1,0 +1,2 @@
+ALTER TABLE "invitation" DROP CONSTRAINT "invitation_max_seats_ck";--> statement-breakpoint
+ALTER TABLE "invitation" ADD CONSTRAINT "invitation_max_seats_ck" CHECK ("invitation"."max_seats" between 1 and 12);

@@ -1,5 +1,6 @@
 /** Validation (Zod) des actions de l'espace admin. */
 import { z } from 'zod';
+import { SEAT_COUNT } from '../invitation/boot';
 import { normalizePhone } from '~/lib/phone';
 
 const name = z.string().trim().min(1).max(80);
@@ -49,7 +50,7 @@ export const invitationInput = z
     email,
     phone,
     displayName: optionalText(120),
-    maxSeats: z.coerce.number().int().min(1).max(6).optional(),
+    maxSeats: z.coerce.number().int().min(1).max(SEAT_COUNT).optional(),
     agreement: z.enum(['invite', 'invitee']).optional(),
     /** envoyer tout de suite (« Envoyer le faire-part ») */
     send: z.boolean().optional(),
@@ -66,7 +67,7 @@ export const invitationPatch = z.object({
   email: z.union([email, z.literal(null)]).optional(),
   phone: z.union([phone, z.literal(null)]).optional(),
   displayName: z.string().trim().min(1).max(120).optional(),
-  maxSeats: z.coerce.number().int().min(1).max(6).optional(),
+  maxSeats: z.coerce.number().int().min(1).max(SEAT_COUNT).optional(),
   agreement: z.enum(['invite', 'invitee']).optional(),
   confirmEmail: z.boolean().optional(),
   expectedUpdatedAt: z.iso.datetime(),

@@ -1,5 +1,8 @@
 ---
-/** Scène 3 · La table : la réponse au faire‑part (l'invité et sa famille, 6 places au plus). */
+/**
+ * Scène 3 · La table : la réponse au faire‑part. Autant de chaises que de places prévues par les mariés
+ * (l'invité + ses accompagnants, 6 au plus), réparties régulièrement autour de la table.
+ */
 import Flower from '~/components/ui/Flower.astro';
 import { table as t } from '~/content/fr';
 import type { GuestBoot } from '../../invitation/boot';
@@ -9,8 +12,10 @@ interface Props {
   boot: GuestBoot;
 }
 const { boot } = Astro.props;
-const SEATS = [0, 1, 2, 3, 4, 5];
-const filled = boot.seats.filter(Boolean).length;
+const SEATS = Array.from({ length: boot.maxSeats }, (_, i) => i);
+const angle = (i: number) => `--seat-a:${((360 / boot.maxSeats) * i).toFixed(2)}deg`;
+const FLOWERS = [0, 1, 2, 3, 4, 5];
+const filled = boot.seats.slice(0, boot.maxSeats).filter(Boolean).length;
 ---
 
 <section data-scene="3" class="scene scene--hidden table-scene" aria-labelledby="table-title">
@@ -20,7 +25,7 @@ const filled = boot.seats.filter(Boolean).length;
         {t.eyebrow(boot.family)}
       </p>
       <h2 data-rise class="table-scene__title" id="table-title">
-        {t.title}
+        {boot.maxSeats === 1 ? t.titleSolo : t.title}
         <br />
         <span class="table-scene__sub">{t.subtitle}</span>
       </h2>
@@ -41,13 +46,13 @@ const filled = boot.seats.filter(Boolean).length;
           </div>
           <div class="t-top"></div>
           <div class="t-top-flowers">
-            {SEATS.map((k) => (
+            {FLOWERS.map((k) => (
               <Flower kind={k % 2 ? 'frangipani' : 'hibiscus'} />
             ))}
           </div>
           <div class="t-seats">
             {SEATS.map((i) => (
-              <div class="t-seat" data-seat3d={i}>
+              <div class="t-seat" data-seat3d={i} style={angle(i)}>
                 <div class="t-anchor" data-anchor={i} />
                 <div class="t-plate" />
                 <div class="t-chair" data-chair={i}>

@@ -119,9 +119,12 @@ export const table = {
   eyebrow: (family: string) => `Votre table · ${family}`,
   familyFallback: 'Votre famille',
   title: 'Touchez une chaise pour ajouter un membre de votre famille',
+  titleSolo: 'Touchez votre chaise pour vérifier votre nom',
   subtitle: 'glissez de côté pour tourner la table',
   count: (n: number, max: number) =>
-    `${n} / ${max} places · vous et votre famille, jusqu'à ${max - 1} personne${max - 1 > 1 ? 's' : ''} avec vous`,
+    max === 1
+      ? `${n} / 1 place · votre place à table` // NOUVEAU
+      : `${n} / ${max} places · vous et votre famille, jusqu'à ${max - 1} personne${max - 1 > 1 ? 's' : ''} avec vous`,
   hostSuffix: { invite: ' · invité', invitee: ' · invitée' },
   send: 'Envoyer notre réponse',
   update: 'Mettre à jour notre réponse',
@@ -469,7 +472,20 @@ export const admin = {
     cancel: 'Annuler',
     delete: 'Supprimer l’invitation',
     displayName: 'Nom affiché (table)',
-    maxSeats: 'Places (1 à 6)',
+    // NOUVEAU : nombre de places (accompagnants), à l'envoi et dans la fiche
+    companions: 'Accompagnants',
+    companionsNone: 'Aucun',
+    companionsOther: 'Autre',
+    companionsCount: 'Nombre d’accompagnants',
+    companionsMax: (n: number) => `${n} au plus`,
+    chairsSummary: (max: number) =>
+      max === 1
+        ? '1 chaise sur sa table : l’invité seul'
+        : `${max} chaises sur sa table : l’invité + ${max - 1} accompagnant${max > 2 ? 's' : ''}`,
+    seatsTaken: (n: number) =>
+      `${n} personne${n > 1 ? 's ont' : ' a'} déjà répondu : on ne peut pas descendre en dessous.`,
+    seatsBelowGuests: 'Moins de places que de personnes ayant déjà répondu : ajoutez des accompagnants.',
+    seatsPlanned: (max: number) => `${max} place${max > 1 ? 's' : ''}`,
     agreement: 'Accord sous la chaise',
     agreementInvite: 'invité',
     agreementInvitee: 'invitée',

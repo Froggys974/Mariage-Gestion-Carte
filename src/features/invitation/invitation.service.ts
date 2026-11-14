@@ -38,6 +38,13 @@ export function normalizeDraft(draft: Draft): Array<BootSeat | null> {
   });
 }
 
+/** Places réduites après coup : les personnes assises au-delà sont regroupées sur les premières chaises. */
+export function fitSeats(seats: ReadonlyArray<BootSeat | null>, max: number): Array<BootSeat | null> {
+  if (seats.every((s, i) => !s || i < max)) return [...seats];
+  const filled = seats.filter((s): s is BootSeat => s !== null).slice(0, max);
+  return Array.from({ length: SEAT_COUNT }, (_, i) => filled[i] ?? null);
+}
+
 export function sameSeats(a: ReadonlyArray<BootSeat | null>, b: ReadonlyArray<BootSeat | null>): boolean {
   const key = (s: BootSeat | null | undefined) =>
     s ? `${s.first.trim()}|${s.last.trim()}|${s.note.trim()}` : '';
@@ -90,6 +97,9 @@ export async function buildGuestBoot(db: DbOrTx, inv: Invitation | null): Promis
     if (inv.status === 'submitted' && !sameSeats(draft, submitted)) changed = true;
     seats = draft;
   }
+  const fitted = fitSeats(seats, inv.maxSeats);
+  if (inv.status === 'submitted' && !sameSeats(fitted, seats)) changed = true;
+  seats = fitted;
   return {
     token: inv.token,
     email: inv.email,

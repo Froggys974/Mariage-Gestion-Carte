@@ -1,6 +1,6 @@
 /**
  * Table 3D en CSS (prototype : tickTable / tapSeat / tDown / tMove / tUp).
- * Plateau incliné (rotateX 58°), 6 chaises tous les 60° ; glisser de côté fait tourner la table
+ * Plateau incliné (rotateX 58°), de 1 à 6 chaises réparties régulièrement (6 : tous les 60°) ; glisser de côté fait tourner la table
  * avec de l'inertie ; au repos elle tourne doucement ; toucher une chaise l'amène devant puis la recule.
  * Les noms au-dessus des chaises sont replacés à chaque image selon la position de la chaise à l'écran.
  */
@@ -50,8 +50,8 @@ export function createSpin(): SpinState {
 }
 
 /** Angle à viser pour amener la chaise i devant, par le chemin le plus court. */
-export function seatTarget(current: number, i: number): number {
-  let t = -i * TABLE.SEAT_ANGLE;
+export function seatTarget(current: number, i: number, angle: number = TABLE.SEAT_ANGLE): number {
+  let t = -i * angle;
   t += 360 * Math.round((current - t) / 360);
   return t + 0; // évite -0
 }
@@ -132,6 +132,7 @@ export function init(box: HTMLElement, options: TableOptions): TableController {
   const world = box.querySelector<HTMLElement>('[data-world]');
   const anchors = Array.from(box.querySelectorAll<HTMLElement>('[data-anchor]'));
   const labels = Array.from(box.querySelectorAll<HTMLElement>('[data-label]'));
+  const seatAngle = 360 / Math.max(1, anchors.length);
   const s = createSpin();
   let drag: Drag | null = null;
   let suppressUntil = 0;
@@ -231,7 +232,7 @@ export function init(box: HTMLElement, options: TableOptions): TableController {
       });
     },
     bringToFront(i) {
-      s.target = fixed() ? null : seatTarget(s.spin, i);
+      s.target = fixed() ? null : seatTarget(s.spin, i, seatAngle);
       s.vel = 0;
       s.lastTouch = performance.now();
       lastP = Number.NaN;
