@@ -70,4 +70,5 @@ export interface GuestBoot {
   wedding: WeddingLabels;
 }
 
-export const SEAT_COUNT = 6;
+/** places au plus par invitation (l'invité + 11 accompagnants) */
+export const SEAT_COUNT = 12;

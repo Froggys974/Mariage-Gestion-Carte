@@ -94,7 +94,7 @@ export const invitation = pgTable(
       'gin',
       sql`f_unaccent(lower(${t.contactFirstName} || ' ' || ${t.contactLastName})) gin_trgm_ops`,
     ),
-    check('invitation_max_seats_ck', sql`${t.maxSeats} between 1 and 6`),
+    check('invitation_max_seats_ck', sql`${t.maxSeats} between 1 and 12`),
     check('invitation_token_ck', sql`${t.token} ~ '^[A-Za-z0-9_-]{22}$'`),
   ],
 );

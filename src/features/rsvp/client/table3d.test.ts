@@ -25,6 +25,10 @@ describe('géométrie de la table 3D', () => {
     expect(seatTarget(-20, 5)).toBe(-300 + 360); // 60 : plus court que -300
     expect(seatTarget(700, 2)).toBe(-120 + 720);
   });
+  it('vise la bonne chaise quand il y en a moins de 6 (360° / nombre de chaises)', () => {
+    expect(seatTarget(-20, 1, 180)).toBe(-180);
+    expect(seatTarget(-20, 3, 90)).toBe(90);
+  });
   it('incline la table en arrivant sur la scène', () => {
     expect(worldAngles(10, 3)).toEqual({ tilt: 58, spin: 10 });
     expect(worldAngles(10, 2, 2)).toEqual({ tilt: 58, spin: 10 });

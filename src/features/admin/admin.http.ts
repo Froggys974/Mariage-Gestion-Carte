@@ -12,6 +12,8 @@ export async function adminRoute(action: string, fn: () => Promise<unknown>): Pr
     if (err instanceof DuplicateContactError) return problem(409, 'duplicate');
     if (err instanceof Error && err.message === 'not_found') return problem(404, 'not_found');
     if (err instanceof Error && err.message === 'contact') return problem(400, 'contact');
+    if (err instanceof Error && err.message === 'seats_below_guests')
+      return problem(400, 'seats_below_guests');
     logger.error({ err, action }, 'admin : erreur');
     return problem(500, 'server_error');
   }

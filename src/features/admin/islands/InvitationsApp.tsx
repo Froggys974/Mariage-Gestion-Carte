@@ -11,6 +11,7 @@ import {
   status as statusLabels,
   whatsapp,
 } from '~/content/fr';
+import { SEAT_COUNT } from '~/features/invitation/boot';
 import { classifySendError } from '~/features/messaging/send-errors';
 import type { WeddingLabels } from '~/features/wedding/wedding';
 import type { AdminInvitation, Kpis as KpiData, SendInfo } from '../invitations.service';
@@ -22,6 +23,8 @@ const t = admin.list;
 const fa = admin.failures;
 const STATUSES = ['not_sent', 'sent', 'opened', 'started', 'submitted', 'declined'] as const;
 const COPIED_MS = 1600;
+const SEAT_CHOICES = [1, 2, 3, 4, 5, 6] as const;
+const DEFAULT_SEATS = 2;
 const TOAST_MS = 3200;
 
 interface Props {
@@ -44,6 +47,7 @@ function inputError(r: { error: string; extra: Record<string, unknown> }, fallba
   const issues = Array.isArray(r.extra.issues) ? (r.extra.issues as Array<{ message?: string }>) : [];
   const has = (m: string) => r.error === m || issues.some((i) => i.message === m);
   if (r.error === 'email_domain') return t.emailDomain(String(r.extra.domain ?? ''));
+  if (r.error === 'seats_below_guests') return t.seatsBelowGuests;
   if (has('phone')) return t.phoneInvalid;
   if (has('email')) return t.emailInvalid;
   if (has('contact')) return t.missing;
@@ -70,6 +74,95 @@ function TypoChoice({
         {t.emailTypoKeep}
       </button>
     </div>
+  );
+}
+
+/** `min` : personnes ayant déjà répondu (on ne peut pas descendre en dessous). */
+function SeatsPicker({
+  name,
+  value,
+  min = 1,
+  onChange,
+}: {
+  name: string;
+  value: number;
+  min?: number;
+  onChange: (n: number) => void;
+}) {
+  const lastChip = SEAT_CHOICES.length;
+  const [custom, setCustom] = useState(value > lastChip);
+  const [typed, setTyped] = useState(String(value - 1));
+  const field = useRef<HTMLInputElement>(null);
+  const minCompanions = Math.max(0, min - 1);
+
+  const pickOther = () => {
+    setCustom(true);
+    const n = Math.max(value, lastChip + 1, min);
+    setTyped(String(n - 1));
+    onChange(n);
+    window.requestAnimationFrame(() => field.current?.select());
+  };
+  const type = (raw: string) => {
+    setTyped(raw);
+    const n = Number(raw);
+    if (Number.isInteger(n) && n >= minCompanions && n <= SEAT_COUNT - 1) onChange(n + 1);
+  };
+
+  return (
+    <fieldset class="seats-pick">
+      <legend class="a-field">{t.companions}</legend>
+      <div class="seats-pick__chips">
+        {SEAT_CHOICES.map((n) => (
+          <label class="seats-pick__chip" key={n}>
+            <input
+              type="radio"
+              name={name}
+              value={n}
+              checked={!custom && value === n}
+              disabled={n < min}
+              onChange={() => {
+                setCustom(false);
+                onChange(n);
+              }}
+            />
+            <span>{n === 1 ? t.companionsNone : `+${n - 1}`}</span>
+          </label>
+        ))}
+        <label class="seats-pick__chip">
+          <input type="radio" name={name} value="other" checked={custom} onChange={pickOther} />
+          <span>{t.companionsOther}</span>
+        </label>
+      </div>
+      {custom && (
+        <label class="seats-pick__other">
+          <span class="a-field">{t.companionsCount}</span>
+          <span class="seats-pick__other-row">
+            <span aria-hidden="true">+</span>
+            <input
+              ref={field}
+              class="a-input"
+              type="number"
+              inputMode="numeric"
+              min={minCompanions}
+              max={SEAT_COUNT - 1}
+              value={typed}
+              onInput={(e) => type((e.target as HTMLInputElement).value)}
+              onBlur={() => setTyped(String(value - 1))}
+            />
+            <span class="a-hint">{t.companionsMax(SEAT_COUNT - 1)}</span>
+          </span>
+        </label>
+      )}
+      <p class="seats-pick__preview" aria-live="polite">
+        <span class="seats-pick__chairs" aria-hidden="true">
+          {Array.from({ length: value }, (_, i) => (
+            <i key={i} class={i === 0 ? 'is-host' : undefined} />
+          ))}
+        </span>
+        {t.chairsSummary(value)}
+      </p>
+      {min > 1 && <p class="a-hint">{t.seatsTaken(min)}</p>}
+    </fieldset>
   );
 }
 
@@ -384,7 +477,16 @@ export default function InvitationsApp({
               <div>
                 <span class={`a-badge a-badge--${inv.status}`}>{statusLabels[inv.status]}</span>
               </div>
-              <div class="a-row__seats">{inv.seats || '—'}</div>
+              <div class="a-row__seats">
+                {inv.seats ? (
+                  <>
+                    {inv.seats}
+                    <span class="a-row__max"> / {inv.maxSeats}</span>
+                  </>
+                ) : (
+                  <span class="a-row__max">{t.seatsPlanned(inv.maxSeats)}</span>
+                )}
+              </div>
               <div class="a-row__actions">
                 <button class="a-row__copy" type="button" title={t.copyTitle} onClick={() => copy(inv)}>
                   {copied === inv.id ? t.copied : t.copy}
@@ -489,7 +591,9 @@ function NewInvitation({
   whatsappApi: boolean;
 }) {
   const [waLinkToOpen, setWaLinkToOpen] = useState<string | null>(null);
-  const [f, setF] = useState({ first: '', last: '', email: '', phone: '' });
+  const empty = { first: '', last: '', email: '', phone: '', maxSeats: DEFAULT_SEATS };
+  const [f, setF] = useState(empty);
+  const [sentCount, setSentCount] = useState(0);
   const [hint, setHint] = useState<string>(t.hint);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -544,7 +648,8 @@ function NewInvitation({
         msg = r.data.channel ? t.createdAndQueued(name, channelLabels[r.data.channel]) : t.created(name);
       }
       onCreated(r.data.invitation, r.data.kpis, msg);
-      setF({ first: '', last: '', email: '', phone: '' });
+      setF(empty);
+      setSentCount((c) => c + 1);
       setHint(msg);
       setError(false);
     } else if (r.error === 'email_typo') {
@@ -598,6 +703,12 @@ function NewInvitation({
           onInput={set('phone')}
         />
       </div>
+      <SeatsPicker
+        key={sentCount}
+        name="new-seats"
+        value={f.maxSeats}
+        onChange={(n) => setF({ ...f, maxSeats: n })}
+      />
       <div class="a-toolbar">
         <button class="a-btn a-btn--primary" type="submit" disabled={busy}>
           {t.send}
@@ -643,7 +754,7 @@ function EditPanel({
     email: inv.email ?? '',
     phone: inv.phoneLabel ?? '',
     displayName: inv.displayName,
-    maxSeats: String(inv.maxSeats),
+    maxSeats: inv.maxSeats,
     agreement: inv.agreement,
   });
   const [err, setErr] = useState('');
@@ -666,7 +777,7 @@ function EditPanel({
       email: fields.email.trim() || null,
       phone: fields.phone.trim() || null,
       displayName: fields.displayName,
-      maxSeats: Number(fields.maxSeats),
+      maxSeats: fields.maxSeats,
       agreement: fields.agreement,
       confirmEmail,
       expectedUpdatedAt: inv.updatedAt,
@@ -710,16 +821,6 @@ function EditPanel({
           <input class="a-input" value={f.displayName} onInput={set('displayName')} />
         </label>
         <label class="a-field">
-          {t.maxSeats}
-          <select class="a-input" value={f.maxSeats} onChange={set('maxSeats')}>
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <option value={n} key={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label class="a-field">
           {t.agreement}
           <select class="a-input" value={f.agreement} onChange={set('agreement')}>
             <option value="invite">{t.agreementInvite}</option>
@@ -727,6 +828,12 @@ function EditPanel({
           </select>
         </label>
       </div>
+      <SeatsPicker
+        name={`seats-${inv.id}`}
+        value={f.maxSeats}
+        min={Math.max(1, inv.seats)}
+        onChange={(n) => setF({ ...f, maxSeats: n })}
+      />
       {err && <p class="a-error">{err}</p>}
       {typo && (
         <TypoChoice

@@ -390,6 +390,131 @@ select.a-input {
   color: var(--or-500);
   font-family: var(--font-display);
   font-size: 19px;
+  white-space: nowrap;
+}
+.a-row__max {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(247, 243, 234, 0.5);
+}
+
+.seats-pick {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.seats-pick > legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+.seats-pick__chips {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  max-width: 480px;
+}
+@media (max-width: 480px) {
+  .seats-pick__chips {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.seats-pick__other {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.seats-pick__other-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--or-500);
+  font-size: 18px;
+}
+.seats-pick__other-row .a-input {
+  width: 84px;
+  text-align: center;
+}
+.seats-pick__chip {
+  position: relative;
+  display: flex;
+}
+.seats-pick__chip input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.seats-pick__chip span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 44px;
+  padding: 0 2px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(247, 243, 234, 0.18);
+  background: var(--surface-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.seats-pick__chip input:checked + span {
+  background: var(--or-500);
+  border-color: var(--or-500);
+  color: var(--text-on-gold);
+  font-weight: 600;
+}
+.seats-pick__chip input:focus-visible + span {
+  outline: 2px solid var(--or-300);
+  outline-offset: 2px;
+}
+.seats-pick__chip input:disabled {
+  cursor: not-allowed;
+}
+.seats-pick__chip input:disabled + span {
+  opacity: 0.35;
+}
+@media (hover: hover) {
+  .seats-pick__chip input:not(:checked, :disabled):hover + span {
+    border-color: var(--or-500);
+  }
+}
+.seats-pick__preview {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(247, 243, 234, 0.75);
+}
+.seats-pick__chairs {
+  display: inline-flex;
+  gap: 5px;
+}
+.seats-pick__chairs > i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px dashed rgba(229, 185, 107, 0.8);
+}
+.seats-pick__chairs > i.is-host {
+  border: 1px solid var(--or-500);
+  background: var(--or-500);
+}
+@media (prefers-reduced-motion: reduce) {
+  .seats-pick__chip span {
+    transition: none;
+  }
 }
 .a-row__actions {
   display: flex;

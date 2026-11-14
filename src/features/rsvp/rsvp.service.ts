@@ -8,7 +8,7 @@ import type { Db, Tx } from '~/lib/db/client';
 import { guest, invitation, type Draft, type Invitation } from '~/lib/db/schema';
 import { getSiteSettings, isClosed } from '../card/card.service';
 import { SEAT_COUNT, type BootSeat } from '../invitation/boot';
-import { guestsToSeats, normalizeDraft, sameSeats } from '../invitation/invitation.service';
+import { fitSeats, guestsToSeats, normalizeDraft, sameSeats } from '../invitation/invitation.service';
 import { isTokenShape } from '../invitation/token';
 import { planGuestReplacement } from './replace';
 import type { SeatsInput } from './rsvp.schema';
@@ -64,7 +64,7 @@ async function stateOf(tx: Tx, inv: Invitation): Promise<RsvpState> {
     .where(eq(guest.invitationId, inv.id))
     .orderBy(asc(guest.position));
   const submitted = guestsToSeats(rows);
-  const seats = inv.draft
+  const stored = inv.draft
     ? normalizeDraft(inv.draft)
     : rows.length
       ? submitted
@@ -72,11 +72,15 @@ async function stateOf(tx: Tx, inv: Invitation): Promise<RsvpState> {
           { first: inv.contactFirstName, last: inv.contactLastName, note: '' },
           ...Array.from({ length: SEAT_COUNT - 1 }, () => null),
         ];
+  const seats = fitSeats(stored, inv.maxSeats);
   return {
     seats,
     sent: inv.status === 'submitted',
     declined: inv.status === 'declined',
-    changed: inv.status === 'submitted' && Boolean(inv.draft) && !sameSeats(seats, submitted),
+    changed:
+      inv.status === 'submitted' &&
+      (Boolean(inv.draft) || !sameSeats(seats, stored)) &&
+      !sameSeats(seats, submitted),
     updatedAt: inv.updatedAt.toISOString(),
   };
 }
