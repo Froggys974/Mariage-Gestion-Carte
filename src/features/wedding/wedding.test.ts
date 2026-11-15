@@ -77,6 +77,31 @@ describe('saisie des infos du mariage', () => {
     expect(bad({ weddingDate: '19/12/2026' })).toBe(false);
     expect(bad({ receptionTime: '', contactPhone: '', venueRegion: '' })).toBe(true);
   });
+  it('second téléphone facultatif : normalisé, et le nom devient obligatoire s’il est rempli', () => {
+    const ok = weddingInput.parse({
+      ...DEMO_WEDDING,
+      contactPhone2: '0693 44 55 66',
+      contactPhone2Label: 'Marie',
+    });
+    expect(ok.contactPhone2).toBe('+262693445566');
+    expect(ok.contactPhone2Label).toBe('Marie');
+    const noName = weddingInput.safeParse({
+      ...DEMO_WEDDING,
+      contactPhone2: '0693 44 55 66',
+      contactPhone2Label: ' ',
+    });
+    expect(noName.success).toBe(false);
+    expect(noName.error?.issues[0]?.path).toEqual(['contactPhone2Label']);
+    expect(
+      weddingInput.safeParse({ ...DEMO_WEDDING, contactPhone2: '12', contactPhone2Label: 'Marie' }).success,
+    ).toBe(false);
+    const { contactPhone2: _a, contactPhone2Label: _b, ...without } = DEMO_WEDDING;
+    expect(weddingInput.parse(without).contactPhone2).toBe('');
+    expect(
+      setupInput.safeParse({ ...DEMO_WEDDING, contactPhone2: '0693 44 55 66', contactPhone2Label: '' })
+        .success,
+    ).toBe(false);
+  });
   it('l’installation demande en plus la date limite des réponses', () => {
     const { rsvpDeadline: _omit, ...withoutDeadline } = DEMO_WEDDING;
     expect(setupInput.safeParse(withoutDeadline).success).toBe(false);

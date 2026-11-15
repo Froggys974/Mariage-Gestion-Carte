@@ -9,6 +9,11 @@ interface Props {
   wedding: WeddingLabels;
 }
 const { wedding: w } = Astro.props;
+/** jusqu'à deux numéros, côte à côte sur une même ligne */
+const phones = [
+  { number: w.contactPhone, label: w.contactPhoneLabel },
+  { number: w.contactPhone2, label: w.contactPhone2Label },
+].filter((p) => p.number);
 ---
 
 <section data-scene="5" class="scene scene--center scene--hidden contact" aria-labelledby="contact-title">
@@ -24,11 +29,15 @@ const { wedding: w } = Astro.props;
         <span class="contact__label">{contact.email}</span>
         <span class="contact__value">{w.contactEmail}</span>
       </a>
-      {w.contactPhone && (
-        <a data-rise class="contact__card" href={`tel:${w.contactPhone}`}>
-          <span class="contact__label">{w.contactPhoneLabel || contact.phone}</span>
-          <span class="contact__value">{formatPhone(w.contactPhone)}</span>
-        </a>
+      {phones.length > 0 && (
+        <div class="contact__phones">
+          {phones.map((p) => (
+            <a data-rise class="contact__card" href={`tel:${p.number}`}>
+              <span class="contact__label">{p.label || contact.phone}</span>
+              <span class="contact__value">{formatPhone(p.number)}</span>
+            </a>
+          ))}
+        </div>
       )}
       <a data-rise class="contact__card" href={w.mapsUrl} target="_blank" rel="noopener noreferrer">
         <span class="contact__label">{contact.route}</span>

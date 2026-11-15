@@ -38,7 +38,23 @@ const email = z
   .pipe(z.email('email'))
   .transform((v) => v.toLowerCase());
 
-export const weddingInput = z.object({
+/** Numéro facultatif : '' ou converti en E.164 (+262692…). */
+const optionalPhone = z
+  .string()
+  .trim()
+  .max(40)
+  .default('')
+  .transform((v, ctx) => {
+    if (!v) return '';
+    const e164 = normalizePhone(v);
+    if (!e164) {
+      ctx.addIssue({ code: 'custom', message: 'phone' });
+      return z.NEVER;
+    }
+    return e164;
+  });
+
+const weddingFields = z.object({
   partner1First: required(L.FIRST),
   partner1Last: required(L.LAST),
   partner2First: required(L.FIRST),
@@ -51,25 +67,22 @@ export const weddingInput = z.object({
   venueRegion: optional(L.REGION),
   receptionPlace: optional(L.RECEPTION_PLACE),
   contactEmail: email,
-  contactPhone: z
-    .string()
-    .trim()
-    .max(40)
-    .default('')
-    .transform((v, ctx) => {
-      if (!v) return '';
-      const e164 = normalizePhone(v);
-      if (!e164) {
-        ctx.addIssue({ code: 'custom', message: 'phone' });
-        return z.NEVER;
-      }
-      return e164;
-    }),
+  contactPhone: optionalPhone,
   contactPhoneLabel: optional(L.PHONE_LABEL),
+  contactPhone2: optionalPhone,
+  contactPhone2Label: optional(L.PHONE_LABEL),
   privacyEmail: email,
 });
 
-export const setupInput = weddingInput.extend({ rsvpDeadline: ymd });
+/** Le nom de la personne est obligatoire dès que le second numéro est rempli. */
+const secondPhoneNamed = (w: { contactPhone2: string; contactPhone2Label: string }, ctx: z.RefinementCtx) => {
+  if (w.contactPhone2 && !w.contactPhone2Label) {
+    ctx.addIssue({ code: 'custom', path: ['contactPhone2Label'], message: 'required' });
+  }
+};
+
+export const weddingInput = weddingFields.superRefine(secondPhoneNamed);
+export const setupInput = weddingFields.extend({ rsvpDeadline: ymd }).superRefine(secondPhoneNamed);
 
 export type WeddingInput = z.infer<typeof weddingInput>;
 export type SetupInput = z.infer<typeof setupInput>;
@@ -92,6 +105,8 @@ function toInfo(w: Wedding): WeddingInfo {
     contactEmail: w.contactEmail,
     contactPhone: w.contactPhone,
     contactPhoneLabel: w.contactPhoneLabel,
+    contactPhone2: w.contactPhone2,
+    contactPhone2Label: w.contactPhone2Label,
     privacyEmail: w.privacyEmail,
   };
 }

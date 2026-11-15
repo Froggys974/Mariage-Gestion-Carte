@@ -1,7 +1,7 @@
 /** Enveloppe des routes /api/admin/* : erreurs → JSON, journal sans données personnelles. */
 import { json, problem } from '~/lib/http';
 import { logger } from '~/lib/logger';
-import { DuplicateContactError, VersionConflictError } from './invitations.service';
+import { DuplicateContactError, DuplicateNameError, VersionConflictError } from './invitations.service';
 
 export async function adminRoute(action: string, fn: () => Promise<unknown>): Promise<Response> {
   try {
@@ -10,6 +10,7 @@ export async function adminRoute(action: string, fn: () => Promise<unknown>): Pr
   } catch (err) {
     if (err instanceof VersionConflictError) return problem(409, 'conflict');
     if (err instanceof DuplicateContactError) return problem(409, 'duplicate');
+    if (err instanceof DuplicateNameError) return problem(409, 'duplicate_name', { existing: err.existing });
     if (err instanceof Error && err.message === 'not_found') return problem(404, 'not_found');
     if (err instanceof Error && err.message === 'contact') return problem(400, 'contact');
     if (err instanceof Error && err.message === 'seats_below_guests')
