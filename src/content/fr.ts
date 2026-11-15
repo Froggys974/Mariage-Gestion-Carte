@@ -126,15 +126,14 @@ export const table = {
       ? `${n} / 1 place · votre place à table` // NOUVEAU
       : `${n} / ${max} places · vous et votre famille, jusqu'à ${max - 1} personne${max - 1 > 1 ? 's' : ''} avec vous`,
   hostSuffix: { invite: ' · invité', invitee: ' · invitée' },
-  send: 'Envoyer notre réponse',
+  send: 'Confirmer notre présence',
   update: 'Mettre à jour notre réponse',
   sent: 'Réponse envoyée ✓',
   hintBefore:
     "Les places choisies ici ne sont pas forcément celles du plan de table final : les mariés s'occupent du placement.",
   hintChanged: 'Votre nouvelle réponse remplacera la précédente, sans doublon.',
   hintSent: (deadline: string): Rich => [
-    rcf('Mersi !'),
-    ` Vous pouvez revenir avec ce même lien pour modifier votre réponse jusqu'au ${deadline}. Le plan de table final sera fait par les mariés.`,
+    `Merci ! Vous pouvez revenir avec ce même lien pour modifier votre réponse jusqu'au ${deadline}. Le plan de table final sera fait par les mariés.`,
   ],
   // --- NOUVEAU : déclin, date limite, réseau, accessibilité ---
   decline: 'Nous ne pourrons pas venir',
@@ -352,6 +351,12 @@ export const whatsapp = {
     `Bonjour ${first}, ${w.couplePlain} ont la joie de vous inviter à leur mariage le ${w.dateInline} (${w.venueName}, ${w.venueCity}). Votre faire-part personnel : ${link}`,
 } as const;
 
+/** NOUVEAU : SMS envoyé à la main depuis l'appli Messages (version courte : le lieu est sur le faire-part). */
+export const sms = {
+  manual: (w: WeddingLabels, first: string, link: string) =>
+    `Bonjour ${first}, ${w.couplePlain} vous invitent à leur mariage le ${w.dateShort}. Votre faire-part : ${link}`,
+} as const;
+
 export const status = {
   not_sent: 'Non envoyé', // NOUVEAU
   sent: 'En attente',
@@ -370,7 +375,7 @@ export const sendStatus = {
   failed: 'Échec',
 } as const;
 
-export const channel = { email: 'Email', whatsapp: 'WhatsApp', lien: 'Lien' };
+export const channel = { email: 'Email', whatsapp: 'WhatsApp', lien: 'Lien', sms: 'SMS' };
 
 export const purpose = {
   // NOUVEAU
@@ -436,6 +441,11 @@ export const admin = {
     emailTypo: (suggestion: string) => `Adresse à vérifier : vouliez‑vous dire ${suggestion} ?`,
     emailTypoFix: (suggestion: string) => `Utiliser ${suggestion}`,
     emailTypoKeep: 'Garder telle quelle',
+    // NOUVEAU : même prénom + nom qu'une invitation existante (on peut confirmer : vrais homonymes)
+    sameName: (name: string, family: string, sentOn: string | null) =>
+      `Une invitation existe déjà pour ${name} (${family})${sentOn ? `, envoyée le ${sentOn}` : ', pas encore envoyée'}.`,
+    sameNameCreate: 'Créer quand même',
+    sameNameCancel: 'Annuler',
     emailDomain: (domain: string) =>
       `Le domaine « ${domain} » n’existe pas ou ne reçoit pas d’emails : vérifiez l’adresse.`,
     csvEmailTypo: (suggestion: string) =>
@@ -465,6 +475,14 @@ export const admin = {
     createdWaMe: (n: string) =>
       `Invitation créée pour ${n} : WhatsApp s’ouvre avec le message prêt, appuyez sur Envoyer.`,
     openWhatsapp: 'Ouvrir WhatsApp',
+    // NOUVEAU : SMS envoyé à la main (appli Messages du téléphone)
+    resendSms: 'Envoyer par SMS',
+    sendVia: 'Envoyer par :',
+    viaWhatsapp: 'WhatsApp',
+    viaSms: 'SMS',
+    createdSms: (n: string) =>
+      `Invitation créée pour ${n} : Messages s’ouvre avec le SMS prêt, appuyez sur Envoyer.`,
+    openSms: 'Ouvrir les SMS',
     noChannel: 'Aucun contact pour ce canal.',
     queued: 'Envoi ajouté à la file.',
     edit: 'Modifier',
@@ -528,6 +546,10 @@ export const admin = {
     preview: (ok: number, ko: number) =>
       `${ok} ligne${ok > 1 ? 's' : ''} valide${ok > 1 ? 's' : ''}, ${ko} en erreur.`,
     line: (n: number) => `Ligne ${n}`,
+    // NOUVEAU : même prénom + nom (déjà sur le site ou plus haut dans le fichier)
+    sameName: (name: string) => `${name} existe déjà : ligne ignorée.`,
+    previewSameName: (n: number) =>
+      `${n} ligne${n > 1 ? 's' : ''} ignorée${n > 1 ? 's' : ''} : même prénom et nom qu’une invitation existante.`,
     confirm: (n: number) => `Importer ${n} invitation${n > 1 ? 's' : ''}`,
     done: (n: number, d: number) =>
       `${n} invitation${n > 1 ? 's' : ''} importée${n > 1 ? 's' : ''}${d ? `, ${d} doublon${d > 1 ? 's' : ''} ignoré${d > 1 ? 's' : ''}` : ''}.`,
@@ -679,6 +701,11 @@ export const admin = {
     contactPhone: 'Téléphone affiché aux invités (facultatif)',
     contactPhoneLabel: 'Qui répond à ce numéro ? (facultatif)',
     contactPhoneLabelPlaceholder: 'ex. Témoins, Marie (témoin)',
+    // NOUVEAU : second numéro facultatif (le nom devient obligatoire si le numéro est rempli)
+    contactPhone2: 'Autre téléphone (facultatif)',
+    contactPhone2Label: 'Nom de la personne',
+    contactPhone2LabelPlaceholder: 'ex. Marie (témoin)',
+    phone2NameRequired: 'Indiquez le nom de la personne qui répond à ce numéro.',
     privacyEmail: 'Email pour les questions sur les données personnelles',
     privacyHelp: 'Obligatoire (RGPD) : affiché sur la page Confidentialité.',
     deadline: 'Date limite des réponses',
@@ -693,6 +720,10 @@ export const admin = {
     save: 'Enregistrer',
     saving: 'Enregistrement…',
     saved: 'Informations enregistrées : le site des invités est à jour.',
+    // NOUVEAU : récapitulatif affiché après « Enregistrer »
+    changesTitle: 'Modifications :',
+    noChanges: 'Aucune modification : les informations étaient déjà à jour.',
+    emptyValue: '(vide)',
     required: 'Ce champ est obligatoire.',
     invalidEmail: 'Adresse email invalide.',
     invalidPhone: 'Numéro de téléphone invalide (ex. 0692 11 22 33 ou +262 692 11 22 33).',

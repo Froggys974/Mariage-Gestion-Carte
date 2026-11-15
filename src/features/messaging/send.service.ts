@@ -1,5 +1,5 @@
 /**
- * Mise en file des envois (email, WhatsApp) et traces des envois manuels (lien copié, wa.me).
+ * Mise en file des envois (email, WhatsApp) et traces des envois manuels (lien copié, wa.me, SMS).
  * Le worker (src/worker) traite la file à 1 envoi par seconde.
  */
 import { and, eq, inArray, sql } from 'drizzle-orm';
@@ -36,11 +36,15 @@ export async function markInvitationSent(db: DbOrTx, invitationId: string, purpo
     .where(eq(invitation.id, invitationId));
 }
 
-/** Lien copié ou envoyé à la main par wa.me : on garde une trace (canal « lien »). */
-export async function logManualSend(db: DbOrTx, invitationId: string): Promise<SendLog> {
+/** Envoi à la main : lien copié ou wa.me (canal « lien »), SMS depuis le téléphone (canal « sms »). */
+export async function logManualSend(
+  db: DbOrTx,
+  invitationId: string,
+  channel: 'lien' | 'sms' = 'lien',
+): Promise<SendLog> {
   const [log] = await db
     .insert(sendLog)
-    .values({ invitationId, channel: 'lien', purpose: 'invitation', status: 'sent', sentAt: new Date() })
+    .values({ invitationId, channel, purpose: 'invitation', status: 'sent', sentAt: new Date() })
     .returning();
   await markInvitationSent(db, invitationId, 'invitation');
   return log!;

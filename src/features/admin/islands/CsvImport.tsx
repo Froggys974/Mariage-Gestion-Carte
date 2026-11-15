@@ -69,6 +69,21 @@ export function CsvImport({
                 ))}
               </ul>
             )}
+            {report.sameName.length > 0 && (
+              <>
+                <p class="a-hint" data-csv-same-name>
+                  {t.previewSameName(report.sameName.length)}
+                </p>
+                <ul class="a-history">
+                  {report.sameName.slice(0, 50).map((s) => (
+                    <li key={s.line}>
+                      <span>{t.line(s.line)}</span>
+                      <span class="a-hint">{t.sameName(s.name)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </>
         )}
         <div class="a-toolbar">

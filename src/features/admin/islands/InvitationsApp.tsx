@@ -1,6 +1,6 @@
 /**
  * Onglet « Invitations » : nouvel envoi, recherche et filtres, sélection et envoi groupé,
- * copie du lien, renvoi (email, WhatsApp, wa.me), fiche, historique des envois, import / export CSV.
+ * copie du lien, renvoi (email, WhatsApp, wa.me, SMS), fiche, historique des envois, import / export CSV.
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import {
@@ -8,13 +8,15 @@ import {
   channel as channelLabels,
   purpose as purposeLabels,
   sendStatus,
+  sms,
   status as statusLabels,
   whatsapp,
 } from '~/content/fr';
 import { SEAT_COUNT } from '~/features/invitation/boot';
 import { classifySendError } from '~/features/messaging/send-errors';
 import type { WeddingLabels } from '~/features/wedding/wedding';
-import type { AdminInvitation, Kpis as KpiData, SendInfo } from '../invitations.service';
+import { formatDayMonth } from '~/lib/dates';
+import type { AdminInvitation, Kpis as KpiData, SameName, SendInfo } from '../invitations.service';
 import { api, fold } from './api';
 import { CsvImport } from './CsvImport';
 import { KPIS_EVENT } from './Kpis';
@@ -173,6 +175,14 @@ function waLink(w: WeddingLabels, inv: AdminInvitation): string {
     : `https://wa.me/?text=${text}`;
 }
 
+/**
+ * Ouvre l'appli Messages avec le SMS prêt. « ?&body= » est compris à la fois par iPhone et Android.
+ * Ne fonctionne que sur un téléphone (ou un Mac relié à un iPhone).
+ */
+function smsLink(w: WeddingLabels, inv: AdminInvitation): string {
+  return `sms:${inv.phone ?? ''}?&body=${encodeURIComponent(sms.manual(w, inv.first, inv.link))}`;
+}
+
 export default function InvitationsApp({
   initial,
   kpis: initialKpis,
@@ -263,7 +273,7 @@ export default function InvitationsApp({
     if (inv) setList((l) => l.map((x) => (x.id === inv.id ? inv : x)));
   };
 
-  const send = async (inv: AdminInvitation, channel: 'email' | 'whatsapp' | 'lien' | 'wa_me') => {
+  const send = async (inv: AdminInvitation, channel: 'email' | 'whatsapp' | 'lien' | 'wa_me' | 'sms') => {
     setMenuId(null);
     const r = await api<{ invitation: AdminInvitation }>('POST', `/api/admin/invitations/${inv.id}/send`, {
       channel,
@@ -392,6 +402,7 @@ export default function InvitationsApp({
           <option value="email">{channelLabels.email}</option>
           <option value="whatsapp">{channelLabels.whatsapp}</option>
           <option value="lien">{channelLabels.lien}</option>
+          <option value="sms">{channelLabels.sms}</option>
           <option value="none">{t.notSent}</option>
         </select>
         <div class="a-spacer" />
@@ -530,6 +541,15 @@ export default function InvitationsApp({
                     >
                       {t.resendManual}
                     </a>
+                    {inv.phone ? (
+                      <a role="menuitem" href={smsLink(wedding, inv)} onClick={() => void send(inv, 'sms')}>
+                        {t.resendSms}
+                      </a>
+                    ) : (
+                      <button role="menuitem" type="button" disabled>
+                        {t.resendSms}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -591,24 +611,34 @@ function NewInvitation({
   whatsappApi: boolean;
 }) {
   const [waLinkToOpen, setWaLinkToOpen] = useState<string | null>(null);
+  const [smsLinkToOpen, setSmsLinkToOpen] = useState<string | null>(null);
+  // invité avec un numéro seulement : WhatsApp (automatique ou wa.me) ou SMS depuis le téléphone
+  const [via, setVia] = useState<'whatsapp' | 'sms'>('whatsapp');
   const empty = { first: '', last: '', email: '', phone: '', maxSeats: DEFAULT_SEATS };
   const [f, setF] = useState(empty);
+  const phoneOnly = !f.email.trim() && Boolean(f.phone.trim());
   const [sentCount, setSentCount] = useState(0);
   const [hint, setHint] = useState<string>(t.hint);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [typo, setTypo] = useState<string | null>(null);
+  // même prénom + nom qu'une invitation existante : on attend « Créer quand même » ou « Annuler »
+  const [sameName, setSameName] = useState<{ existing: SameName; confirmEmail: boolean } | null>(null);
   const set = (k: keyof typeof f) => (e: Event) => {
     setTypo(null);
+    setSameName(null);
     setF({ ...f, [k]: (e.target as HTMLInputElement).value });
   };
 
   const submit = (e: Event) => {
     e.preventDefault();
-    void create(f, false);
+    void create(f);
   };
 
-  const create = async (fields: typeof f, confirmEmail: boolean) => {
+  const create = async (
+    fields: typeof f,
+    { confirmEmail = false, confirmName = false }: { confirmEmail?: boolean; confirmName?: boolean } = {},
+  ) => {
     if (!fields.first.trim() || !fields.last.trim() || (!fields.email.trim() && !fields.phone.trim())) {
       setHint(t.missing);
       setError(true);
@@ -616,24 +646,40 @@ function NewInvitation({
     }
     setBusy(true);
     setTypo(null);
+    setSameName(null);
     setWaLinkToOpen(null);
+    setSmsLinkToOpen(null);
+    const bySms = !fields.email.trim() && Boolean(fields.phone.trim()) && via === 'sms';
     // sans email ni API WhatsApp : on ouvre l'onglet tout de suite (pendant le clic), sinon le navigateur le
     // bloquerait après la réponse du serveur ; il recevra le lien wa.me une fois l'invitation créée
     const waTab =
-      !fields.email.trim() && fields.phone.trim() && !whatsappApi
+      !bySms && !fields.email.trim() && fields.phone.trim() && !whatsappApi
         ? window.open('about:blank', '_blank')
         : null;
     const r = await api<{
       invitation: AdminInvitation;
       kpis: KpiData;
       channel: 'email' | 'whatsapp' | 'wa_me' | null;
-    }>('POST', '/api/admin/invitations', { ...fields, send: true, confirmEmail });
+    }>('POST', '/api/admin/invitations', { ...fields, send: !bySms, confirmEmail, confirmName });
     setBusy(false);
     if (!r.ok || r.data.channel !== 'wa_me') waTab?.close();
     if (r.ok) {
       const name = `${r.data.invitation.first} ${r.data.invitation.last}`;
       let msg: string;
-      if (r.data.channel === 'wa_me') {
+      if (bySms) {
+        // SMS : l'invitation est créée sans envoi automatique ; Messages s'ouvre avec le SMS prêt. Certains
+        // navigateurs (Android) refusent d'ouvrir Messages hors d'un clic : le bouton « Ouvrir les SMS » reste là.
+        const link = smsLink(wedding, r.data.invitation);
+        setSmsLinkToOpen(link);
+        window.location.href = link;
+        msg = t.createdSms(name);
+        const logged = await api<{ invitation: AdminInvitation }>(
+          'POST',
+          `/api/admin/invitations/${r.data.invitation.id}/send`,
+          { channel: 'sms' },
+        );
+        if (logged.ok) r.data.invitation = logged.data.invitation;
+      } else if (r.data.channel === 'wa_me') {
         const link = waLink(wedding, r.data.invitation);
         if (waTab) waTab.location.href = link;
         else setWaLinkToOpen(link); // onglet bloqué : bouton « Ouvrir WhatsApp »
@@ -656,6 +702,10 @@ function NewInvitation({
       setError(true);
       setHint('');
       setTypo(String(r.extra.suggestion ?? ''));
+    } else if (r.error === 'duplicate_name' && r.extra.existing) {
+      setError(true);
+      setHint('');
+      setSameName({ existing: r.extra.existing as SameName, confirmEmail });
     } else {
       setError(true);
       setHint(
@@ -709,6 +759,19 @@ function NewInvitation({
         value={f.maxSeats}
         onChange={(n) => setF({ ...f, maxSeats: n })}
       />
+      {phoneOnly && (
+        <fieldset class="seats-pick">
+          <legend class="a-field">{t.sendVia}</legend>
+          <div class="seats-pick__chips">
+            {(['whatsapp', 'sms'] as const).map((v) => (
+              <label class="seats-pick__chip" key={v}>
+                <input type="radio" name="new-via" value={v} checked={via === v} onChange={() => setVia(v)} />
+                <span>{v === 'sms' ? t.viaSms : t.viaWhatsapp}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
       <div class="a-toolbar">
         <button class="a-btn a-btn--primary" type="submit" disabled={busy}>
           {t.send}
@@ -721,6 +784,11 @@ function NewInvitation({
             {t.openWhatsapp}
           </a>
         )}
+        {smsLinkToOpen && (
+          <a class="a-btn a-btn--outline" href={smsLinkToOpen} data-open-sms>
+            {t.openSms}
+          </a>
+        )}
       </div>
       {typo && (
         <TypoChoice
@@ -728,10 +796,32 @@ function NewInvitation({
           onFix={() => {
             const fixed = { ...f, email: typo };
             setF(fixed);
-            void create(fixed, false);
+            void create(fixed);
           }}
-          onKeep={() => void create(f, true)}
+          onKeep={() => void create(f, { confirmEmail: true })}
         />
+      )}
+      {sameName && (
+        <div class="a-typo" role="alert" data-same-name>
+          <span class="a-error">
+            {t.sameName(
+              sameName.existing.name,
+              sameName.existing.family,
+              sameName.existing.firstSentAt ? formatDayMonth(new Date(sameName.existing.firstSentAt)) : null,
+            )}
+          </span>
+          <button class="a-btn a-btn--outline a-btn--small" type="button" onClick={() => setSameName(null)}>
+            {t.sameNameCancel}
+          </button>
+          <button
+            class="a-btn a-btn--primary a-btn--small"
+            type="button"
+            disabled={busy}
+            onClick={() => void create(f, { confirmEmail: sameName.confirmEmail, confirmName: true })}
+          >
+            {t.sameNameCreate}
+          </button>
+        </div>
       )}
     </form>
   );

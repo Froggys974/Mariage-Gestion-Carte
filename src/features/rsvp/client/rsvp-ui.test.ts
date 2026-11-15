@@ -5,9 +5,9 @@ import { buttonState, countFilled, initials, seatLabel, validSeat } from './rsvp
 const base = { sent: false, declined: false, changed: false, closed: false };
 
 describe('bouton d’envoi et texte d’aide (prototype)', () => {
-  it('« Envoyer notre réponse » au départ', () => {
+  it('« Confirmer notre présence » au départ', () => {
     const b = buttonState(base, '1er décembre');
-    expect(b.label).toBe('Envoyer notre réponse');
+    expect(b.label).toBe('Confirmer notre présence');
     expect(plain(b.hint)).toMatch(/ne sont pas forcément celles du plan de table final/);
     expect(b.showDecline).toBe(true);
   });
@@ -19,11 +19,7 @@ describe('bouton d’envoi et texte d’aide (prototype)', () => {
   it('« Réponse envoyée ✓ » une fois envoyé, avec la date limite', () => {
     const b = buttonState({ ...base, sent: true }, '1er décembre');
     expect(b.label).toBe('Réponse envoyée ✓');
-    expect(plain(b.hint)).toMatch(/^Mersi ! Vous pouvez revenir .* jusqu'au 1er décembre\./);
-  });
-  it('balise « Mersi ! » en créole', () => {
-    const b = buttonState({ ...base, sent: true }, '1er décembre');
-    expect(Array.isArray(b.hint) && b.hint[0]).toEqual({ rcf: 'Mersi !' });
+    expect(plain(b.hint)).toMatch(/^Merci ! Vous pouvez revenir .* jusqu'au 1er décembre\./);
   });
   it('passe en lecture seule après la date limite', () => {
     const b = buttonState({ ...base, closed: true }, '1er décembre');
@@ -32,7 +28,7 @@ describe('bouton d’envoi et texte d’aide (prototype)', () => {
   });
   it('après un déclin : on peut encore changer d’avis', () => {
     const b = buttonState({ ...base, declined: true }, '1er décembre');
-    expect(b.label).toBe('Envoyer notre réponse');
+    expect(b.label).toBe('Confirmer notre présence');
     expect(b.showDecline).toBe(false);
   });
 });

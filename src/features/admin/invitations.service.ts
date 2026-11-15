@@ -184,8 +184,64 @@ async function findByContact(db: DbOrTx, email?: string, phone?: string): Promis
   return null;
 }
 
+/**
+ * Clé de comparaison prénom + nom : sans accents, majuscules, tirets ni apostrophes
+ * (« Marie-Ange PAYET » = « marie ange payet »).
+ */
+export function nameKey(first: string, last: string): string {
+  return `${first} ${last}`
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLocaleLowerCase('fr-FR')
+    .replace(/[\s\-‐‑'’.]+/g, ' ')
+    .trim();
+}
+
+/** Invitation existante au même prénom + nom (les mariés peuvent confirmer : vrais homonymes). */
+export interface SameName {
+  name: string;
+  family: string;
+  /** date du premier envoi (ISO), ou null si jamais envoyée */
+  firstSentAt: string | null;
+}
+
+export class DuplicateNameError extends Error {
+  constructor(readonly existing: SameName) {
+    super('duplicate_name');
+  }
+}
+
+/** Invitations des invités, indexées par prénom + nom normalisés. */
+async function invitationsByName(db: DbOrTx): Promise<Map<string, SameName>> {
+  const rows = await db
+    .select({
+      first: invitation.contactFirstName,
+      last: invitation.contactLastName,
+      family: invitation.displayName,
+      firstSentAt: invitation.firstSentAt,
+    })
+    .from(invitation)
+    .where(guestOnly);
+  const byName = new Map<string, SameName>();
+  for (const r of rows) {
+    const key = nameKey(r.first, r.last);
+    if (!byName.has(key)) {
+      byName.set(key, {
+        name: `${r.first} ${r.last}`,
+        family: r.family,
+        firstSentAt: r.firstSentAt ? r.firstSentAt.toISOString() : null,
+      });
+    }
+  }
+  return byName;
+}
+
 export async function createInvitation(db: DbOrTx, input: InvitationInput): Promise<Invitation> {
   if (await findByContact(db, input.email, input.phone)) throw new DuplicateContactError();
+  if (!input.confirmName) {
+    const same = (await invitationsByName(db)).get(nameKey(input.first, input.last));
+    if (same) throw new DuplicateNameError(same);
+  }
   const [row] = await db
     .insert(invitation)
     .values({
@@ -266,6 +322,8 @@ export interface ImportReport {
   errors: Array<{ line: number; message: string }>;
   imported: number;
   duplicates: number;
+  /** lignes ignorées : même prénom + nom qu'une invitation existante ou qu'une ligne plus haut */
+  sameName: Array<{ line: number; name: string }>;
 }
 
 /** Import CSV : validation de chaque ligne (dont l'adresse email) ; dryRun = aperçu sans écrire. */
@@ -276,8 +334,18 @@ export async function importCsv(
   checkDomain: (email: string) => Promise<DomainStatus> = checkMailDomain,
 ): Promise<ImportReport> {
   const records = rowsToRecords(parseCsv(csv));
-  const report: ImportReport = { valid: 0, errors: [], imported: 0, duplicates: 0 };
+  const report: ImportReport = { valid: 0, errors: [], imported: 0, duplicates: 0, sameName: [] };
   const valid: InvitationInput[] = [];
+  // prénom + nom déjà sur le site, puis au fil du fichier : la 2e occurrence est ignorée et listée
+  const names = new Set((await invitationsByName(db)).keys());
+  const keepUnlessSameName = (line: number, input: InvitationInput) => {
+    const key = nameKey(input.first, input.last);
+    if (names.has(key)) report.sameName.push({ line, name: `${input.first} ${input.last}` });
+    else {
+      names.add(key);
+      valid.push(input);
+    }
+  };
   // une seule requête DNS par domaine
   const domains = new Map<string, Promise<DomainStatus>>();
   const cachedCheck = (email: string) => {
@@ -302,21 +370,23 @@ export async function importCsv(
       });
     } else if (parsed.data.email) {
       const v = await verifyEmail(parsed.data.email, { checkDomain: cachedCheck });
-      if (v.ok) valid.push(parsed.data);
+      if (v.ok) keepUnlessSameName(r.line, parsed.data);
       else {
         report.errors.push({
           line: r.line,
           message: v.code === 'email_typo' ? t.list.csvEmailTypo(v.suggestion) : t.list.emailDomain(v.domain),
         });
       }
-    } else valid.push(parsed.data);
+    } else keepUnlessSameName(r.line, parsed.data);
   }
   report.valid = valid.length;
+  report.duplicates = report.sameName.length;
   if (dryRun) return report;
   await db.transaction(async (tx) => {
     for (const v of valid) {
       try {
-        await createInvitation(tx, v);
+        // les homonymes ont déjà été écartés ci-dessus
+        await createInvitation(tx, { ...v, confirmName: true });
         report.imported++;
       } catch (err) {
         if (err instanceof DuplicateContactError) report.duplicates++;

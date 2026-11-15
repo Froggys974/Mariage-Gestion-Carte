@@ -56,6 +56,8 @@ export const invitationInput = z
     send: z.boolean().optional(),
     /** garder l'adresse malgré une faute de frappe probable (« Garder telle quelle ») */
     confirmEmail: z.boolean().optional(),
+    /** créer malgré une invitation au même prénom + nom (« Créer quand même » : vrai homonyme) */
+    confirmName: z.boolean().optional(),
   })
   .refine((v) => Boolean(v.email || v.phone), { message: 'contact', path: ['email'] });
 
@@ -80,7 +82,7 @@ export const importBody = z.object({
   dryRun: z.boolean().default(true),
 });
 
-export const sendBody = z.object({ channel: z.enum(['email', 'whatsapp', 'lien', 'wa_me']) });
+export const sendBody = z.object({ channel: z.enum(['email', 'whatsapp', 'lien', 'wa_me', 'sms']) });
 export const bulkSendBody = z.object({
   ids: z.array(z.uuid()).min(1).max(1000),
   channel: z.enum(['email', 'whatsapp']),

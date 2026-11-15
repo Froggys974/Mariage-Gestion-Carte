@@ -101,6 +101,23 @@
   cursor: pointer;
   transition: border-color var(--dur-fast);
 }
+/* un ou deux téléphones : une seule ligne, cartes de même largeur */
+.contact__phones {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: inherit;
+}
+.contact__phones .contact__card {
+  padding-inline: 14px;
+}
+/* lettres moins espacées : « Marie (témoin) » tient sur une ligne même sur un écran de 320 px */
+.contact__phones .contact__label {
+  letter-spacing: 0.1em;
+}
+.contact__phones .contact__value {
+  white-space: nowrap;
+}
 .contact__card--lost {
   border: 1px dashed rgba(229, 185, 107, 0.5);
   background: rgba(229, 185, 107, 0.06);
