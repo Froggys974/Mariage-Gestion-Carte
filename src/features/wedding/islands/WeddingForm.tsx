@@ -18,6 +18,7 @@ import {
   weddingLabels,
   type WeddingInfo,
 } from '../wedding';
+import { formValues, weddingChanges, type WeddingChange } from '../changes';
 
 const t = admin.wedding;
 
@@ -28,7 +29,17 @@ const STEPS: Array<{ key: keyof typeof t.steps; fields: Field[] }> = [
   { key: 'couple', fields: ['partner1First', 'partner1Last', 'partner2First', 'partner2Last'] },
   { key: 'day', fields: ['weddingDate', 'ceremonyTime', 'receptionTime'] },
   { key: 'place', fields: ['venueName', 'venueCity', 'venueRegion', 'receptionPlace'] },
-  { key: 'contact', fields: ['contactEmail', 'contactPhone', 'contactPhoneLabel', 'privacyEmail'] },
+  {
+    key: 'contact',
+    fields: [
+      'contactEmail',
+      'contactPhone',
+      'contactPhoneLabel',
+      'contactPhone2',
+      'contactPhone2Label',
+      'privacyEmail',
+    ],
+  },
   { key: 'replies', fields: ['rsvpDeadline'] },
 ];
 const REQUIRED: Field[] = [
@@ -53,6 +64,7 @@ function check(v: WeddingFormValues, fields: Field[]): Partial<Record<Field, str
   for (const f of fields) {
     const value = String(v[f] ?? '').trim();
     if (REQUIRED.includes(f) && !value) e[f] = t.required;
+    else if (f === 'contactPhone2Label' && !value && v.contactPhone2.trim()) e[f] = t.phone2NameRequired;
     else if ((f === 'contactEmail' || f === 'privacyEmail') && !EMAIL_RE.test(value)) e[f] = t.invalidEmail;
     else if ((f === 'ceremonyTime' || (f === 'receptionTime' && value)) && !TIME_RE.test(value)) {
       e[f] = t.invalidTime;
@@ -77,7 +89,9 @@ function serverErrors(extra: Record<string, unknown>): Partial<Record<Field, str
           ? t.invalidPhone
           : i.message === 'time'
             ? t.invalidTime
-            : t.required;
+            : f === 'contactPhone2Label'
+              ? t.phone2NameRequired
+              : t.required;
   }
   return e;
 }
@@ -96,6 +110,9 @@ export default function WeddingForm({
   const [deadlineTouched, setDeadlineTouched] = useState(Boolean(initial.rsvpDeadline));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  // infos telles qu'enregistrées : sert à lister ce qui a changé après « Enregistrer »
+  const [baseline, setBaseline] = useState<WeddingInfo>(initial);
+  const [changes, setChanges] = useState<WeddingChange[] | null>(null);
 
   const set = (f: Field) => (e: Event) => {
     const value = (e.target as HTMLInputElement).value;
@@ -111,7 +128,11 @@ export default function WeddingForm({
       return next;
     });
     if (f === 'rsvpDeadline') setDeadlineTouched(true);
-    setErrors((er) => ({ ...er, [f]: undefined }));
+    setErrors((er) => ({
+      ...er,
+      [f]: undefined,
+      ...(f === 'contactPhone2' ? { contactPhone2Label: undefined } : {}),
+    }));
   };
 
   const input = (
@@ -205,6 +226,13 @@ export default function WeddingForm({
             placeholder: t.contactPhoneLabelPlaceholder,
           })}
         </div>
+        <div class="wiz__two">
+          {input('contactPhone2', t.contactPhone2, { type: 'tel', max: 40, autocomplete: 'off' })}
+          {input('contactPhone2Label', t.contactPhone2Label, {
+            max: L.PHONE_LABEL,
+            placeholder: t.contactPhone2LabelPlaceholder,
+          })}
+        </div>
         {input('privacyEmail', t.privacyEmail, { type: 'email', max: L.EMAIL, help: t.privacyHelp })}
       </>
     ),
@@ -249,6 +277,7 @@ export default function WeddingForm({
       return;
     }
     setBusy(true);
+    setChanges(null);
     setMsg({ text: setup ? t.creating : t.saving, ok: true });
     const { rsvpDeadline, ...info } = v;
     const r = await api<{ wedding: WeddingInfo }>(
@@ -262,6 +291,10 @@ export default function WeddingForm({
         location.href = '/admin';
         return;
       }
+      const saved = formValues(r.data.wedding);
+      setChanges(weddingChanges(baseline, saved));
+      setBaseline(saved);
+      setV((x) => ({ ...saved, rsvpDeadline: x.rsvpDeadline }));
       setMsg({ text: t.saved, ok: true });
     } else {
       const fieldErrs = serverErrors(r.extra);
@@ -298,6 +331,26 @@ export default function WeddingForm({
           </button>
           {status}
         </div>
+        {changes && (
+          <div class="wiz__changes" data-wedding-changes>
+            {changes.length === 0 ? (
+              <p class="a-hint">{t.noChanges}</p>
+            ) : (
+              <>
+                <p class="wiz__changes-title">{t.changesTitle}</p>
+                <ul class="wiz__changes-list">
+                  {changes.map((c) => (
+                    <li key={c.label}>
+                      <strong>{c.label}</strong> : <span class="wiz__changes-old">{c.before}</span>
+                      {' → '}
+                      <span class="wiz__changes-new">{c.after}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
       </form>
     );
   }

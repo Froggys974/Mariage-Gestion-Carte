@@ -75,9 +75,13 @@ test.describe('site invité', () => {
     await openSeat(page, 2);
     await fillSeat(page, 'Noah', invitation.last);
     await expect(page.locator('[data-seat-count]')).toContainText('3 / 6 places');
+    // les deux boutons tiennent à l'écran, sans défiler, même sur un petit téléphone
+    await expect(page.locator('[data-rsvp-send]')).toHaveText('Confirmer notre présence');
+    await expect(page.locator('[data-rsvp-send]')).toBeInViewport({ ratio: 1 });
+    await expect(page.locator('[data-rsvp-decline]')).toBeInViewport({ ratio: 1 });
     await page.locator('[data-rsvp-send]').click();
     await expect(page.locator('[data-rsvp-send]')).toHaveText('Réponse envoyée ✓');
-    await expect(page.locator('[data-rsvp-hint] [lang="rcf"]')).toHaveText('Mersi !');
+    await expect(page.locator('[data-rsvp-hint]')).toContainText('Merci ! Vous pouvez revenir');
     const rows =
       await sql`select first_name, notes from guest where invitation_id = ${invitation.id} order by position`;
     expect(rows.map((r) => r.first_name)).toEqual(['Marie', 'Léa', 'Noah']);

@@ -1217,6 +1217,36 @@ select.a-input {
 .wiz__nav {
   margin-top: 4px;
 }
+/* Récapitulatif après « Enregistrer » (onglet « Mariage ») */
+.wiz__changes {
+  border: 1px solid var(--border-accent);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: rgba(229, 185, 107, 0.06);
+}
+.wiz__changes p {
+  margin: 0;
+}
+.wiz__changes-title {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--or-500);
+}
+.wiz__changes-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.wiz__changes-list strong {
+  font-weight: 600;
+}
+.wiz__changes-old {
+  opacity: 0.65;
+  text-decoration: line-through;
+}
 @media (max-width: 560px) {
   .wiz__two {
     grid-template-columns: minmax(0, 1fr);

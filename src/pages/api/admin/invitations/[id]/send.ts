@@ -11,7 +11,7 @@ import { getEnv } from '~/lib/env';
 import { problem, readJson } from '~/lib/http';
 import { whatsappApiEnabled } from '~/lib/messaging/providers';
 
-/** Envoi unitaire : email / WhatsApp (file d'attente) ou trace d'un envoi manuel (lien copié, wa.me). */
+/** Envoi unitaire : email / WhatsApp (file d'attente) ou trace d'un envoi manuel (lien copié, wa.me, SMS). */
 export const POST: APIRoute = async ({ params, request }) => {
   if (!z.uuid().safeParse(params.id).success) return problem(404, 'not_found');
   const body = await readJson(request, sendBody);
@@ -23,7 +23,10 @@ export const POST: APIRoute = async ({ params, request }) => {
     .where(and(eq(invitation.id, params.id!), eq(invitation.kind, 'guest')));
   if (!inv) return problem(404, 'not_found');
   const { channel } = body.data;
-  if ((channel === 'email' && !inv.email) || (channel === 'whatsapp' && !inv.phoneE164)) {
+  if (
+    (channel === 'email' && !inv.email) ||
+    ((channel === 'whatsapp' || channel === 'sms') && !inv.phoneE164)
+  ) {
     return problem(400, 'no_contact');
   }
   if (channel === 'whatsapp' && !whatsappApiEnabled()) return problem(409, 'whatsapp_off');
@@ -31,7 +34,7 @@ export const POST: APIRoute = async ({ params, request }) => {
     if (channel === 'email' || channel === 'whatsapp') {
       await queueSend(db, inv.id, channel, inv.status === 'not_sent' ? 'invitation' : 'relance');
     } else {
-      await logManualSend(db, inv.id);
+      await logManualSend(db, inv.id, channel === 'sms' ? 'sms' : 'lien');
     }
     return { invitation: await getAdminInvitation(db, inv.id, getEnv().PUBLIC_URL) };
   });

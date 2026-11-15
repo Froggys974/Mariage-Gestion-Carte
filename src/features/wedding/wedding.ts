@@ -27,6 +27,10 @@ export interface WeddingInfo {
   contactPhone: string;
   /** ex. « Témoins » */
   contactPhoneLabel: string;
+  /** second numéro facultatif, E.164 ou '' */
+  contactPhone2: string;
+  /** nom de la personne qui répond au second numéro (obligatoire si le numéro est rempli) */
+  contactPhone2Label: string;
   privacyEmail: string;
 }
 
@@ -113,6 +117,8 @@ export interface WeddingLabels {
   contactEmail: string;
   contactPhone: string;
   contactPhoneLabel: string;
+  contactPhone2: string;
+  contactPhone2Label: string;
   privacyEmail: string;
   /** « Faire-part-Marie-Ange-Jean-Luc.png » */
   cardFileName: string;
@@ -158,6 +164,8 @@ export function weddingLabels(w: WeddingInfo): WeddingLabels {
     contactEmail: w.contactEmail.trim(),
     contactPhone: w.contactPhone.trim(),
     contactPhoneLabel: w.contactPhoneLabel.trim(),
+    contactPhone2: (w.contactPhone2 ?? '').trim(),
+    contactPhone2Label: (w.contactPhone2Label ?? '').trim(),
     privacyEmail: w.privacyEmail.trim(),
     cardFileName: `Faire-part-${slug(`${p1} ${p2}`)}.png`,
   };

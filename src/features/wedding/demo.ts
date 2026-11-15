@@ -19,6 +19,8 @@ export const DEMO_WEDDING: SetupInput = {
   contactEmail: 'contact@mariage.test',
   contactPhone: '+262692000000',
   contactPhoneLabel: 'Témoins',
+  contactPhone2: '',
+  contactPhone2Label: '',
   privacyEmail: 'contact@mariage.test',
   rsvpDeadline: '2027-05-25',
 };

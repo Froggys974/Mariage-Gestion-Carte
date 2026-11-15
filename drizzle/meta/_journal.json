@@ -57,6 +57,20 @@
       "when": 1794667914734,
       "tag": "0007_invitation_12_seats",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794762174661,
+      "tag": "0008_wedding_second_phone",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794769707417,
+      "tag": "0009_send_channel_sms",
+      "breakpoints": true
     }
   ]
 }

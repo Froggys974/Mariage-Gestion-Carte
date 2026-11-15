@@ -33,7 +33,8 @@ export const invitationStatus = pgEnum('invitation_status', [
 ]);
 export const invitationKind = pgEnum('invitation_kind', ['guest', 'couple']);
 export const hostAgreement = pgEnum('host_agreement', ['invite', 'invitee']);
-export const sendChannel = pgEnum('send_channel', ['email', 'whatsapp', 'lien']);
+/** « sms » : SMS envoyé à la main depuis l'appli Messages du téléphone (lien sms:) */
+export const sendChannel = pgEnum('send_channel', ['email', 'whatsapp', 'lien', 'sms']);
 export const sendPurpose = pgEnum('send_purpose', ['invitation', 'relance', 'lien_perdu', 'code', 'carte']);
 export const sendStatus = pgEnum('send_status', ['queued', 'sent', 'delivered', 'read', 'failed']);
 export const tableShape = pgEnum('table_shape', ['round', 'rect']);
@@ -221,6 +222,9 @@ export const wedding = pgTable(
     contactEmail: text('contact_email').notNull(),
     contactPhone: text('contact_phone').notNull().default(''),
     contactPhoneLabel: text('contact_phone_label').notNull().default(''),
+    /** second numéro facultatif (ex. un témoin) et le nom de la personne qui répond */
+    contactPhone2: text('contact_phone2').notNull().default(''),
+    contactPhone2Label: text('contact_phone2_label').notNull().default(''),
     privacyEmail: text('privacy_email').notNull(),
     createdAt: ts('created_at').notNull().defaultNow(),
     updatedAt: ts('updated_at').notNull().defaultNow(),
