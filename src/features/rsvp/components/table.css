@@ -24,6 +24,14 @@
   align-items: center;
   gap: 12px;
 }
+/*
+ * Les boutons passent au-dessus de la table : sur un petit écran (iPhone SE) la table réduite déborde un peu
+ * vers le bas, et sa zone (halo, perspective 3D) ne doit pas recevoir le toucher destiné à « Confirmer ».
+ */
+.table-scene__actions {
+  position: relative;
+  z-index: 1;
+}
 .table-scene__head > p,
 .table-scene__head > h2 {
   margin: 0;
