@@ -477,9 +477,11 @@ export const admin = {
     openWhatsapp: 'Ouvrir WhatsApp',
     // NOUVEAU : SMS envoyé à la main (appli Messages du téléphone)
     resendSms: 'Envoyer par SMS',
-    sendVia: 'Envoyer par :',
+    // fenêtre au clic sur « Envoyer le faire-part » quand l'invité n'a qu'un numéro
+    sendVia: 'Comment envoyer le faire‑part ?',
     viaWhatsapp: 'WhatsApp',
     viaSms: 'SMS',
+    viaLater: 'Rien pour l’instant',
     createdSms: (n: string) =>
       `Invitation créée pour ${n} : Messages s’ouvre avec le SMS prêt, appuyez sur Envoyer.`,
     openSms: 'Ouvrir les SMS',
