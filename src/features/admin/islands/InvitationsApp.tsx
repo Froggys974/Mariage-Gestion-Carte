@@ -168,6 +168,9 @@ function SeatsPicker({
   );
 }
 
+/** Invité avec un numéro seulement : WhatsApp, SMS, ou rien pour l'instant (envoi plus tard depuis la liste). */
+type Via = 'whatsapp' | 'sms' | 'later';
+
 function waLink(w: WeddingLabels, inv: AdminInvitation): string {
   const text = encodeURIComponent(whatsapp.manual(w, inv.first, inv.link));
   return inv.phone
@@ -612,34 +615,54 @@ function NewInvitation({
 }) {
   const [waLinkToOpen, setWaLinkToOpen] = useState<string | null>(null);
   const [smsLinkToOpen, setSmsLinkToOpen] = useState<string | null>(null);
-  // invité avec un numéro seulement : WhatsApp (automatique ou wa.me) ou SMS depuis le téléphone
-  const [via, setVia] = useState<'whatsapp' | 'sms'>('whatsapp');
   const empty = { first: '', last: '', email: '', phone: '', maxSeats: DEFAULT_SEATS };
   const [f, setF] = useState(empty);
-  const phoneOnly = !f.email.trim() && Boolean(f.phone.trim());
+  // invité avec un numéro seulement : une fenêtre demande WhatsApp (automatique ou wa.me), SMS ou rien
+  const [askVia, setAskVia] = useState(false);
+  const viaFirst = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (askVia) viaFirst.current?.focus(); // Échap ferme la fenêtre
+  }, [askVia]);
   const [sentCount, setSentCount] = useState(0);
   const [hint, setHint] = useState<string>(t.hint);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [typo, setTypo] = useState<string | null>(null);
   // même prénom + nom qu'une invitation existante : on attend « Créer quand même » ou « Annuler »
-  const [sameName, setSameName] = useState<{ existing: SameName; confirmEmail: boolean } | null>(null);
+  const [sameName, setSameName] = useState<{
+    existing: SameName;
+    confirmEmail: boolean;
+    via?: Via;
+  } | null>(null);
   const set = (k: keyof typeof f) => (e: Event) => {
     setTypo(null);
     setSameName(null);
     setF({ ...f, [k]: (e.target as HTMLInputElement).value });
   };
 
+  const missing = (fields: typeof f) =>
+    !fields.first.trim() || !fields.last.trim() || (!fields.email.trim() && !fields.phone.trim());
+
   const submit = (e: Event) => {
     e.preventDefault();
-    void create(f);
+    // numéro seul : on demande d'abord comment envoyer (rien ne s'ouvre tant qu'on n'a pas choisi)
+    if (!missing(f) && !f.email.trim()) {
+      // l'erreur d'un essai précédent ne doit pas rester visible derrière la fenêtre
+      setHint(t.hint);
+      setError(false);
+      setAskVia(true);
+    } else void create(f);
   };
 
   const create = async (
     fields: typeof f,
-    { confirmEmail = false, confirmName = false }: { confirmEmail?: boolean; confirmName?: boolean } = {},
+    {
+      confirmEmail = false,
+      confirmName = false,
+      via,
+    }: { confirmEmail?: boolean; confirmName?: boolean; via?: Via } = {},
   ) => {
-    if (!fields.first.trim() || !fields.last.trim() || (!fields.email.trim() && !fields.phone.trim())) {
+    if (missing(fields)) {
       setHint(t.missing);
       setError(true);
       return;
@@ -649,18 +672,23 @@ function NewInvitation({
     setSameName(null);
     setWaLinkToOpen(null);
     setSmsLinkToOpen(null);
-    const bySms = !fields.email.trim() && Boolean(fields.phone.trim()) && via === 'sms';
+    const phoneOnly = !fields.email.trim();
+    const bySms = phoneOnly && via === 'sms';
     // sans email ni API WhatsApp : on ouvre l'onglet tout de suite (pendant le clic), sinon le navigateur le
     // bloquerait après la réponse du serveur ; il recevra le lien wa.me une fois l'invitation créée
     const waTab =
-      !bySms && !fields.email.trim() && fields.phone.trim() && !whatsappApi
-        ? window.open('about:blank', '_blank')
-        : null;
+      phoneOnly && via === 'whatsapp' && !whatsappApi ? window.open('about:blank', '_blank') : null;
     const r = await api<{
       invitation: AdminInvitation;
       kpis: KpiData;
       channel: 'email' | 'whatsapp' | 'wa_me' | null;
-    }>('POST', '/api/admin/invitations', { ...fields, send: !bySms, confirmEmail, confirmName });
+    }>('POST', '/api/admin/invitations', {
+      ...fields,
+      // « Rien pour l'instant » : l'invitation est seulement créée, on l'enverra plus tard depuis la liste
+      send: !phoneOnly || via === 'whatsapp',
+      confirmEmail,
+      confirmName,
+    });
     setBusy(false);
     if (!r.ok || r.data.channel !== 'wa_me') waTab?.close();
     if (r.ok) {
@@ -705,7 +733,7 @@ function NewInvitation({
     } else if (r.error === 'duplicate_name' && r.extra.existing) {
       setError(true);
       setHint('');
-      setSameName({ existing: r.extra.existing as SameName, confirmEmail });
+      setSameName({ existing: r.extra.existing as SameName, confirmEmail, via });
     } else {
       setError(true);
       setHint(
@@ -759,18 +787,46 @@ function NewInvitation({
         value={f.maxSeats}
         onChange={(n) => setF({ ...f, maxSeats: n })}
       />
-      {phoneOnly && (
-        <fieldset class="seats-pick">
-          <legend class="a-field">{t.sendVia}</legend>
-          <div class="seats-pick__chips">
-            {(['whatsapp', 'sms'] as const).map((v) => (
-              <label class="seats-pick__chip" key={v}>
-                <input type="radio" name="new-via" value={v} checked={via === v} onChange={() => setVia(v)} />
-                <span>{v === 'sms' ? t.viaSms : t.viaWhatsapp}</span>
-              </label>
-            ))}
+      {askVia && (
+        <div
+          class="a-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="via-title"
+          onKeyDown={(e) => e.key === 'Escape' && setAskVia(false)}
+          // clic sur le fond sombre : comme « Annuler »
+          onClick={(e) => e.target === e.currentTarget && setAskVia(false)}
+          data-ask-via
+        >
+          <div class="a-card a-dialog__panel a-dialog__panel--narrow">
+            <h2 class="a-card__title" id="via-title">
+              {t.sendVia}
+            </h2>
+            <div class="a-via">
+              {(['whatsapp', 'sms', 'later'] as const).map((v, i) => (
+                <button
+                  key={v}
+                  class={v === 'later' ? 'a-btn a-btn--outline a-via__later' : 'a-btn a-btn--primary'}
+                  type="button"
+                  ref={i === 0 ? viaFirst : undefined}
+                  onClick={() => {
+                    setAskVia(false);
+                    void create(f, { via: v });
+                  }}
+                >
+                  {v === 'whatsapp' ? t.viaWhatsapp : v === 'sms' ? t.viaSms : t.viaLater}
+                </button>
+              ))}
+            </div>
+            <button
+              class="a-btn a-btn--outline a-btn--small a-dialog__cancel"
+              type="button"
+              onClick={() => setAskVia(false)}
+            >
+              {t.cancel}
+            </button>
           </div>
-        </fieldset>
+        </div>
       )}
       <div class="a-toolbar">
         <button class="a-btn a-btn--primary" type="submit" disabled={busy}>
@@ -817,7 +873,9 @@ function NewInvitation({
             class="a-btn a-btn--primary a-btn--small"
             type="button"
             disabled={busy}
-            onClick={() => void create(f, { confirmEmail: sameName.confirmEmail, confirmName: true })}
+            onClick={() =>
+              void create(f, { confirmEmail: sameName.confirmEmail, confirmName: true, via: sameName.via })
+            }
           >
             {t.sameNameCreate}
           </button>
