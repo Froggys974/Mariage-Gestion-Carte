@@ -61,9 +61,13 @@ test('6. admin : se connecter, créer une invitation, copier le lien, placer une
   await page.getByRole('radio', { name: 'Autre' }).check();
   await page.getByRole('spinbutton', { name: 'Nombre d’accompagnants' }).fill('7');
   await expect(page.getByText('8 chaises sur sa table : l’invité + 7 accompagnants')).toBeVisible();
-  // sans email et sans API WhatsApp : WhatsApp (wa.me) s'ouvre avec le message et le lien personnel
-  const popup = page.waitForEvent('popup');
+  // numéro seul : une fenêtre demande comment envoyer ; rien ne s'ouvre avant le choix
   await page.getByRole('button', { name: 'Envoyer le faire-part' }).click();
+  const ask = page.getByRole('dialog', { name: /Comment envoyer le faire/ });
+  await expect(ask).toBeVisible();
+  // sans API WhatsApp : WhatsApp (wa.me) s'ouvre avec le message et le lien personnel
+  const popup = page.waitForEvent('popup');
+  await ask.getByRole('button', { name: 'WhatsApp' }).click();
   const wa = await popup;
   await expect.poll(() => wa.url(), { timeout: 15_000 }).toMatch(/wa\.me|whatsapp\.com/);
   await wa.close();
